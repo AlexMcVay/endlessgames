@@ -32,6 +32,7 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 15px;
+    color: var(--surface);
 }
 
 /* Header Styles */
@@ -217,6 +218,11 @@ footer {
     text-align: center;
     padding: 20px 0;
     margin-top: 40px;
+}
+footer a{
+    color: var(--secondary-color);
+    text-decoration: none;
+    transition: var(--transition);
 }
 
 /* Media Queries */
