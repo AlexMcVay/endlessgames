@@ -23,12 +23,25 @@
             </div>
             <button id="newGame" class="control-btn">New Game</button>
             <button id="showRules" class="control-btn">Show Rules</button>
+            <button id="forfeitButton" class="control-btn secondary">Forfeit</button>
             <a href="../index.html" class="control-btn home-link">
                 <i class="fas fa-home"></i> Back to Games
             </a>
         </div>
 
         <div id="checkerboard"></div>
+
+        <!-- Overlay -->
+        <div id="gameEndOverlay" class="overlay" style="display: none;">
+            <div class="overlay-content">
+                <h2 id="winnerText">The Winner is</h2>
+                <h3 id="winnerName" style="color: var(--primary-color);">Player One</h3>
+                <div class="button-group">
+                    <button id="replayButton" class="play-btn">Replay</button>
+                    <button id="homeButton" class="play-btn">Home</button>
+                </div>
+            </div>
+        </div>
 
         <div class="game-info">
             <div class="player-info">
@@ -82,8 +95,10 @@
     <footer>
         <div class="container">
             <p>Created by <a href="www.alexmcvay.icu" target="_blank" rel="noopener noreferrer">Alex McVay</a></p>
+            <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="AlexandraMcVay" data-description="Support me on Buy me a coffee!" data-message="Thanks for Playing!" data-color="#BD5FFF" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
         </div>
     </footer>
+    <script src="../script.js"></script>
     <script src="checkerlogic.js"></script>
 </body>
 </html>

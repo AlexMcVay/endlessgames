@@ -311,10 +311,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update game status
     function updateStatus() {
         let status = '';
-        
+
         if (chess.in_checkmate()) {
-            status = `Checkmate! ${chess.turn() === 'w' ? 'Black' : 'White'} wins`;
-            // TODO: #1 create a win screen
+            const winner = chess.turn() === 'w' ? 'Black' : 'White';
+            status = `Checkmate! ${winner} wins`;
+
+            // Display the game end overlay with the winner
+            createGameEndOverlay(
+                winner,
+                () => window.open('https://buymeacoffee.com/alexandramcvay', '_blank'), // Donate button
+                () => location.reload(), // Replay button reloads the page
+                () => window.location.href = '../index.html', // Home button redirects to index.html
+                { accentColor: 'var(--primary-color)' } // Use the accent color from styles.css
+            );
         } else if (chess.in_draw()) {
             status = 'Draw!';
             if (chess.in_stalemate()) {
@@ -324,13 +333,22 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (chess.insufficient_material()) {
                 status += ' (Insufficient Material)';
             }
+
+            // Display the game end overlay for a draw
+            createGameEndOverlay(
+                'Draw',
+                () => window.open('https://buymeacoffee.com/alexandramcvay', '_blank'), // Donate button
+                () => location.reload(), // Replay button reloads the page
+                () => window.location.href = '../index.html', // Home button redirects to index.html
+                { accentColor: 'var(--primary-color)' } // Use the accent color from styles.css
+            );
         } else {
             status = `${chess.turn() === 'w' ? 'White' : 'Black'} to move`;
             if (chess.in_check()) {
                 status += ' (Check!)';
             }
         }
-        
+
         gameStatus.textContent = status;
     }
     
@@ -419,6 +437,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('playComputer').classList.add('secondary');
         document.getElementById('playLocal').classList.remove();
         updateBoard();
+    });
+    
+    // Event listener for the forfeit button
+    document.getElementById('forfeitButton').addEventListener('click', () => {
+        console.log('Forfeit button clicked');
+        const forfeitingPlayer = chess.turn() === 'w' ? 'White' : 'Black';
+        const winner = forfeitingPlayer === 'White' ? 'Black' : 'White';
+
+        // Display the game end overlay with the winner
+        createGameEndOverlay(
+            `${winner} wins by forfeit!`,
+            () => window.open('https://buymeacoffee.com/alexandramcvay', '_blank'), // Donate button
+            () => location.reload(), // Replay button reloads the page
+            () => window.location.href = '../index.html', // Home button redirects to index.html
+            { accentColor: 'var(--primary-color)' } // Use the accent color from styles.css
+        );
     });
     
     // Initialize the board

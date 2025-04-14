@@ -353,23 +353,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500);
     }
 
+    // Function to handle game over
+    function handleGameOver(winner) {
+        createGameEndOverlay(
+            winner,
+            () => window.open('https://buymeacoffee.com/alexandramcvay', '_blank'), // Donate button
+            () => location.reload(), // Replay button reloads the page
+            () => window.location.href = '../index.html', // Home button redirects to index.html
+            { accentColor: 'var(--primary-color)' } // Use the accent color from styles.css
+        );
+    }
+
     // Check if the game is over
     function checkGameOver() {
         // Check if a player has no pieces left
         if (gameState.redPieces === 0) {
-            endGame('Black wins!');
+            handleGameOver('Black wins!');
             return;
         }
-        
+
         if (gameState.blackPieces === 0) {
-            endGame('Red wins!');
+            handleGameOver('Red wins!');
             return;
         }
-        
+
         // Check if current player can't move
         const canMove = checkCanMove(gameState.currentPlayer);
         if (!canMove) {
-            endGame(`${gameState.currentPlayer === 'red' ? 'Black' : 'Red'} wins! ${gameState.currentPlayer.charAt(0).toUpperCase() + gameState.currentPlayer.slice(1)} has no valid moves.`);
+            const winner = gameState.currentPlayer === 'red' ? 'Black' : 'Red';
+            handleGameOver(`${winner} wins! ${gameState.currentPlayer.charAt(0).toUpperCase() + gameState.currentPlayer.slice(1)} has no valid moves.`);
         }
     }
 
@@ -410,6 +422,25 @@ document.addEventListener('DOMContentLoaded', () => {
         clearSelection();
         initializeBoard();
     }
+
+    // Event listener for the Forfeit button
+    document.getElementById('forfeitButton').addEventListener('click', () => {
+        const forfeitingPlayer = gameState.currentPlayer === 'red' ? 'Player 1 (Red)' : 'Player 2 (Black)';
+        const winner = forfeitingPlayer === 'Player 1 (Red)' ? 'Player 2 (Black)' : 'Player 1 (Red)';
+
+        // Display the game end overlay with the winner
+        handleGameOver(`${winner} wins by forfeit!`);
+    });
+
+    // Event listener for the Replay button
+    document.getElementById('replayButton').addEventListener('click', () => {
+        location.reload(); // Reload the current page
+    });
+
+    // Event listener for the Home button
+    document.getElementById('homeButton').addEventListener('click', () => {
+        window.location.href = '../index.html'; // Redirect to index.html
+    });
 
     // Event listeners
     newGameBtn.addEventListener('click', resetGame);

@@ -118,6 +118,7 @@ nav {
     font-size: 0.9rem;
     cursor: pointer;
     transition: var(--transition);
+    color: var(--text-primary);
 }
 
 .categories li:hover {

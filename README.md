@@ -43,3 +43,4 @@ A web application that hosts multiple games in a single application, with a unif
 - **Simon Says**: A memory-based color and sound sequence game where you try to repeat the sequence of colors and sounds.
 - **Breakout**: A classic arcade game where you try to break bricks by bouncing a ball off a paddle.
 - **Maze**: a classic game where you try to escape mazes.
+- **Crossoword**: a crossword of words or math equasions
