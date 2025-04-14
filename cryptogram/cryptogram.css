@@ -1,0 +1,71 @@
+.cryptogram-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+    gap: 10px;
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+.cryptogram-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+.cryptogram-cell-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 40px; /* Ensure consistent width for each cell */
+}
+
+.cryptogram-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    padding: 10px;
+    background-color: var(--surface);
+    font-size: 1.2rem;
+    text-align: center;
+    width: 100%; /* Match the width of the container */
+    height: 40px; /* Ensure consistent height */
+}
+
+.cryptogram-cell input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    text-align: center;
+    font-size: 1.2rem;
+    background: none;
+    outline: none;
+    color: var(--text-primary);
+}
+
+.cryptogram-static {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 5px;
+}
+
+.cryptogram-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+    gap: 10px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.cryptogram-number {
+    text-align: center;
+    font-weight: bold;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}

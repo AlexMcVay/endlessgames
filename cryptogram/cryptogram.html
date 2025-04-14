@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cryptogram - MultiGameApp</title>
     <link rel="stylesheet" href="../styles.css">
-    <link rel="stylesheet" href="../cryptogram/cryptogram.css">
+    <link rel="stylesheet" href="cryptogram.css">
 </head>
 <body>
     <header>
         <div class="container">
             <h1><span class="logo">C</span>ryptogram</h1>
-            <p>Unscramble the letters to form a word</p>
+            <p>Guess the letters to form a quote</p>
         </div>
     </header>
 
@@ -19,7 +19,28 @@
         <i class="fas fa-home" alt="Home"></i>
     </a>
 
-    </body>
+    <main>
+        <div class="game-container">
+            <div id="cryptogramBoard" class="cryptogram-board"></div>
+            <div class="controls">
+                <button id="newGame" class="control-btn">New Game</button>
+                <button id="showHint" class="control-btn secondary">Show Hint</button>
+            </div>
+        </div>
+
+        <!-- Overlay -->
+        <div id="gameEndOverlay" class="overlay" style="display: none;">
+            <div class="overlay-content">
+                <h2 id="winnerText">The Winner is</h2>
+                <h3 id="winnerName" style="color: var(--primary-color);">Player One</h3>
+                <div class="button-group">
+                    <button id="replayButton" class="play-btn">Replay</button>
+                    <button id="homeButton" class="play-btn">Home</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
     <footer>
         <div class="container">
             <p>Part of <a href="../index.html">MultigameApp</a> by Alex McVay</p>
@@ -27,7 +48,6 @@
         </div>
     </footer>
     <script src="../script.js"></script>
-    <script src="../cryptogram/cryptogram.js"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="cryptogram.js"></script>
+</body>
 </html>

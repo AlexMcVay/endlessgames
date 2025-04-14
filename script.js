@@ -141,6 +141,94 @@ function removeGameEndOverlay() {
     }
 }
 
+/**
+ * Creates and displays a solo game overlay showing a message and action buttons
+ * @param {string} message - Message to display
+ * @param {Function} donateCallback - Function to call when donate button is clicked
+ * @param {Function} playAgainCallback - Function to call when play again button is clicked
+ * @param {Function} homeCallback - Function to call when home button is clicked
+ * @param {Object} options - Optional configuration settings
+ * @param {string} options.backgroundColor - Background color of the overlay (default: 'rgba(0, 0, 0, 0.8)')
+ * @param {string} options.textColor - Color of the text (default: 'var(--text-primary)')
+ * @param {string} options.accentColor - Color for button highlights (default: 'var(--primary-color)')
+ * @returns {HTMLElement} - The created overlay element
+ */
+function createSoloGameOverlay(message, donateCallback, playAgainCallback, homeCallback, options = {}) {
+    // Default options
+    const config = {
+        backgroundColor: options.backgroundColor || 'white',
+        textColor: options.textColor || 'var(--primary-color)',
+        accentColor: options.accentColor || 'var(--accent-color)'
+    };
+
+    // Create overlay container
+    const overlay = document.createElement('div');
+    overlay.id = 'solo-game-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = config.backgroundColor;
+    overlay.style.display = 'flex';
+    overlay.style.flexDirection = 'column';
+    overlay.style.justifyContent = 'center';
+    overlay.style.alignItems = 'center';
+    overlay.style.zIndex = '9999';
+    overlay.style.fontFamily = 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
+    overlay.style.color = config.textColor;
+    overlay.style.textAlign = 'center';
+    overlay.style.padding = '20px';
+
+    // Create message display
+    const messageText = document.createElement('div');
+    messageText.innerHTML = message.replace(/\n/g, '<br>'); // Replace newlines with line breaks for proper formatting
+    messageText.style.fontSize = '1.5rem';
+    messageText.style.marginBottom = '30px';
+    messageText.style.lineHeight = '1.8';
+
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.justifyContent = 'center';
+    buttonContainer.style.gap = '20px';
+    buttonContainer.style.flexWrap = 'wrap';
+    buttonContainer.style.maxWidth = '800px';
+
+    // Helper function to create styled buttons
+    function createButton(text, callback) {
+        const button = document.createElement('button');
+        button.textContent = text;
+        button.className = 'play-btn'; // Use the button styles from styles.css
+        button.style.minWidth = '200px'; // Increase button size
+        button.style.padding = '15px 20px'; // Add padding for larger buttons
+        button.style.fontSize = '1.2rem'; // Increase font size
+        button.style.cursor = 'pointer';
+        button.onclick = callback;
+        return button;
+    }
+
+    // Create the buttons
+    const donateButton = createButton('Donate', donateCallback);
+    const playAgainButton = createButton('Play Again', playAgainCallback);
+    const homeButton = createButton('Home Screen', homeCallback);
+
+    // Add buttons to container
+    buttonContainer.appendChild(donateButton);
+    buttonContainer.appendChild(playAgainButton);
+    buttonContainer.appendChild(homeButton);
+
+    // Assemble overlay
+    overlay.appendChild(messageText);
+    overlay.appendChild(buttonContainer);
+
+    // Add to document body
+    document.body.appendChild(overlay);
+
+    // Return the overlay element in case the caller needs to modify it
+    return overlay;
+}
+
 // Example usage:
 /*
 createGameEndOverlay(
