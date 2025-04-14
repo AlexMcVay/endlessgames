@@ -5,8 +5,29 @@ document.addEventListener('DOMContentLoaded', function () {
   var newGameBtn = document.getElementById('newGame');
   var showHintBtn = document.getElementById('showHint');
   var phrases = [{
-    phrase: "Test",
-    author: "me"
+    phrase: "Bravery is action in spite of fear, not in the absence of it.",
+    author: "Jennifer Lynn Alvarez"
+  }, {
+    phrase: "The only way to do great work is to love what you do.",
+    author: "Steve Jobs"
+  }, {
+    phrase: "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+    author: "Winston Churchill"
+  }, {
+    phrase: "The future belongs to those who believe in the beauty of their dreams.",
+    author: "Eleanor Roosevelt"
+  }, {
+    phrase: "The best way to predict the future is to create it.",
+    author: "Peter Drucker"
+  }, {
+    phrase: "In the middle of every difficulty lies opportunity.",
+    author: "Albert Einstein"
+  }, {
+    phrase: "Success is walking from failure to failure with no loss of enthusiasm.",
+    author: "Winston Churchill"
+  }, {
+    phrase: "Believe you can and you're halfway there.",
+    author: "Theodore Roosevelt"
   }];
   var currentPhrase = '';
   var currentAuthor = '';
