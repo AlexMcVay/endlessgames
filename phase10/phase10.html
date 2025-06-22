@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 10 - MultigameApp</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="phase10.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="../index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Games</a>
+            <h1><i class="fas fa-layer-group"></i> Phase 10</h1>
+            <button id="helpBtn" class="help-btn"><i class="fas fa-question-circle"></i> Help</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Help Modal -->
+        <div id="helpModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>How to Play Phase 10</h2>
+                <div class="phases-list">
+                    <h3>The 10 Phases:</h3>
+                    <ol>
+                        <li><strong>Phase 1:</strong> 2 sets of 3</li>
+                        <li><strong>Phase 2:</strong> 1 set of 3 + 1 run of 4</li>
+                        <li><strong>Phase 3:</strong> 1 set of 4 + 1 run of 4</li>
+                        <li><strong>Phase 4:</strong> 1 run of 7</li>
+                        <li><strong>Phase 5:</strong> 1 run of 8</li>
+                        <li><strong>Phase 6:</strong> 1 run of 9</li>
+                        <li><strong>Phase 7:</strong> 2 sets of 4</li>
+                        <li><strong>Phase 8:</strong> 7 cards of one color</li>
+                        <li><strong>Phase 9:</strong> 1 set of 5 + 1 set of 2</li>
+                        <li><strong>Phase 10:</strong> 1 set of 5 + 1 set of 3</li>
+                    </ol>
+                    <div class="rules">
+                        <p><strong>Set:</strong> Cards of the same number (different colors)</p>
+                        <p><strong>Run:</strong> Cards in numerical sequence (any color)</p>
+                        <p><strong>Wild Cards:</strong> Can substitute for any card</p>
+                        <p><strong>Skip Cards:</strong> Force next player to lose a turn</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Setup Screen -->
+        <div id="setupScreen" class="screen active">
+            <div class="setup-container">
+                <h2>Game Setup</h2>                <div class="player-count">
+                    <label for="playerCount">Number of Players:</label>
+                    <select id="playerCount">
+                        <option value="1">1 Player (vs AI)</option>
+                        <option value="2">2 Players</option>
+                        <option value="3">3 Players</option>
+                        <option value="4">4 Players</option>
+                    </select>
+                </div>
+                <div class="player-names">                    <div class="player-input">
+                        <label for="player1Name">Player 1 Name:</label>
+                        <input type="text" id="player1Name" value="Player 1" maxlength="15" placeholder="Enter player name">
+                    </div>
+                    <div class="player-input">
+                        <label for="player2Name">Player 2 Name:</label>
+                        <input type="text" id="player2Name" value="Player 2" maxlength="15" placeholder="Enter player name">
+                    </div>
+                    <div class="player-input" id="player3Input" style="display: none;">
+                        <label for="player3Name">Player 3 Name:</label>
+                        <input type="text" id="player3Name" value="Player 3" maxlength="15" placeholder="Enter player name">
+                    </div>
+                    <div class="player-input" id="player4Input" style="display: none;">
+                        <label for="player4Name">Player 4 Name:</label>
+                        <input type="text" id="player4Name" value="Player 4" maxlength="15" placeholder="Enter player name">
+                    </div>
+                </div>
+                <button id="startGameBtn" class="start-btn">Start Game</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen">
+            <!-- Game Info Panel -->
+            <div class="game-info">
+                <div class="round-info">
+                    <span id="currentRound">Round 1</span>
+                </div>
+                <div class="current-phase">
+                    <span id="currentPhaseText">Phase 1: 2 sets of 3</span>
+                </div>
+                <div class="current-player">
+                    <span id="currentPlayerText">Player 1's Turn</span>
+                </div>
+            </div>
+
+            <!-- Players Status -->
+            <div class="players-status">
+                <div id="playersContainer"></div>
+            </div>
+
+            <!-- Game Board -->
+            <div class="game-board">
+                <!-- Discard Pile -->
+                <div class="discard-pile">
+                    <h3>Discard Pile</h3>
+                    <div id="discardPile" class="card-pile">
+                        <div class="empty-pile">Empty</div>
+                    </div>
+                </div>
+
+                <!-- Draw Pile -->
+                <div class="draw-pile">
+                    <h3>Draw Pile</h3>
+                    <div id="drawPile" class="card-pile">
+                        <div class="card-back">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase Display Area -->
+                <div class="phase-display">
+                    <h3>Completed Phases</h3>
+                    <div id="completedPhases" class="completed-phases-area">
+                        <div class="no-phases">No phases completed yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Player's Hand -->
+            <div class="player-hand">
+                <h3>Your Hand</h3>
+                <div id="playerHand" class="hand-cards"></div>
+                <div class="hand-actions">
+                    <button id="completePhaseBtn" class="action-btn" disabled>Complete Phase</button>
+                    <button id="skipTurnBtn" class="action-btn" disabled>End Turn</button>
+                </div>
+            </div>
+
+            <!-- Phase Building Area -->
+            <div class="phase-builder">
+                <h3>Build Your Phase</h3>
+                <div id="phaseHint" class="phase-hint"></div>
+                <div id="phaseBuilder" class="phase-builder-area">
+                    <div class="phase-group" data-group="1">
+                        <div class="group-header">Group 1</div>
+                        <div class="drop-zone"></div>
+                    </div>
+                    <div class="phase-group" data-group="2">
+                        <div class="group-header">Group 2</div>
+                        <div class="drop-zone"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="screen">
+            <div class="game-over-container">
+                <h2>Game Over!</h2>
+                <div id="finalScores" class="final-scores"></div>
+                <div class="game-over-actions">
+                    <button id="playAgainBtn" class="action-btn">Play Again</button>
+                    <button id="backToMenuBtn" class="action-btn">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="phase10.js"></script>
+</body>
+</html>
