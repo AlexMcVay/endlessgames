@@ -72,14 +72,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add input box for letters or static character for spaces/punctuation
             if (char.match(/[A-Z]/)) {
                 const cell = document.createElement('div');
-                cell.classList.add('cryptogram-cell');
-
-                const input = document.createElement('input');
+                cell.classList.add('cryptogram-cell');                const input = document.createElement('input');
                 input.type = 'text';
                 input.maxLength = 1;
                 input.dataset.index = index;
                 input.value = playerGuesses[index] || '';
+                input.style.backgroundColor = ''; // Reset background color
+                input.style.color = ''; // Reset text color
                 input.addEventListener('input', handleInput);
+                input.addEventListener('keydown', handleKeyDown);
                 cell.appendChild(input);
 
                 cellContainer.appendChild(cell);
@@ -95,22 +96,61 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         cryptogramBoard.appendChild(cryptogramContainer);
-    }
-
-    // Handle input in the cryptogram cells
+    }    // Handle input in the cryptogram cells
     function handleInput(event) {
         const index = event.target.dataset.index;
         const value = event.target.value.toUpperCase();
+        const correctLetter = currentPhrase[index];
 
-        // Accept only valid alphabetic inputs
+        // Accept only valid alphabetic inputs and check if it's the correct letter
         if (value.match(/^[A-Z]$/)) {
-            playerGuesses[index] = value;
+            if (value === correctLetter) {
+                // Correct letter - accept it
+                playerGuesses[index] = value;
+                event.target.style.backgroundColor = '#d4edda'; // Light green background for correct
+                event.target.style.color = '#155724'; // Dark green text
+                
+                // Move focus to next empty input
+                const nextInput = findNextEmptyInput(index);
+                if (nextInput) {
+                    setTimeout(() => nextInput.focus(), 100);
+                }
+            } else {
+                // Incorrect letter - reject it with visual feedback
+                event.target.value = ''; // Clear invalid input
+                event.target.style.backgroundColor = '#f8d7da'; // Light red background for incorrect
+                event.target.style.color = '#721c24'; // Dark red text
+                event.target.classList.add('shake'); // Add shake animation
+                
+                // Reset styles and animation after a short delay
+                setTimeout(() => {
+                    event.target.style.backgroundColor = '';
+                    event.target.style.color = '';
+                    event.target.classList.remove('shake');
+                }, 500);
+                
+                delete playerGuesses[index];
+            }
         } else {
             event.target.value = ''; // Clear invalid input
             delete playerGuesses[index];
         }
 
         checkWinCondition();
+    }    // Helper function to find the next empty input field
+    function findNextEmptyInput(currentIndex) {
+        const inputs = document.querySelectorAll('.cryptogram-cell input');
+        const currentIndexNum = parseInt(currentIndex);
+        
+        for (let i = 0; i < inputs.length; i++) {
+            const input = inputs[i];
+            const inputIndex = parseInt(input.dataset.index);
+            
+            if (inputIndex > currentIndexNum && input.value === '') {
+                return input;
+            }
+        }
+        return null;
     }
 
     // Check if the player has won
@@ -134,6 +174,69 @@ document.addEventListener('DOMContentLoaded', () => {
             () => window.location.href = '../index.html', // Home button redirects to index.html
             { accentColor: 'var(--primary-color)' } // Use the accent color from styles.css
         );
+    }
+
+    // Handle keyboard navigation
+    function handleKeyDown(event) {
+        const currentIndex = parseInt(event.target.dataset.index);
+        const inputs = document.querySelectorAll('.cryptogram-cell input');
+        
+        switch (event.key) {
+            case 'ArrowLeft':
+                event.preventDefault();
+                findPreviousInput(currentIndex)?.focus();
+                break;
+            case 'ArrowRight':
+                event.preventDefault();
+                findNextInput(currentIndex)?.focus();
+                break;
+            case 'Backspace':
+                if (event.target.value === '') {
+                    event.preventDefault();
+                    const prevInput = findPreviousInput(currentIndex);
+                    if (prevInput) {
+                        prevInput.value = '';
+                        delete playerGuesses[prevInput.dataset.index];
+                        prevInput.style.backgroundColor = '';
+                        prevInput.style.color = '';
+                        prevInput.focus();
+                    }
+                }
+                break;
+        }
+    }
+
+    // Helper function to find the previous input field
+    function findPreviousInput(currentIndex) {
+        const inputs = document.querySelectorAll('.cryptogram-cell input');
+        let previousInput = null;
+        
+        for (let i = 0; i < inputs.length; i++) {
+            const input = inputs[i];
+            const inputIndex = parseInt(input.dataset.index);
+            
+            if (inputIndex < currentIndex) {
+                previousInput = input;
+            } else {
+                break;
+            }
+        }
+        return previousInput;
+    }
+
+    // Helper function to find the next input field (for arrow navigation)
+    function findNextInput(currentIndex) {
+        const inputs = document.querySelectorAll('.cryptogram-cell input');
+        
+        for (let i = 0; i < inputs.length; i++) {
+            const input = inputs[i];
+            const inputIndex = parseInt(input.dataset.index);
+            
+            if (inputIndex > currentIndex) {
+                return input;
+            }
+        }
+        return null;
     }
 
     // Event listeners

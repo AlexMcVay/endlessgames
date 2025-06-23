@@ -99,7 +99,12 @@ document.addEventListener('DOMContentLoaded', function () {
         input.maxLength = 1;
         input.dataset.index = index;
         input.value = playerGuesses[index] || '';
+        input.style.backgroundColor = ''; // Reset background color
+
+        input.style.color = ''; // Reset text color
+
         input.addEventListener('input', handleInput);
+        input.addEventListener('keydown', handleKeyDown);
         cell.appendChild(input);
         cellContainer.appendChild(cell);
       } else {
@@ -118,10 +123,43 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function handleInput(event) {
     var index = event.target.dataset.index;
-    var value = event.target.value.toUpperCase(); // Accept only valid alphabetic inputs
+    var value = event.target.value.toUpperCase();
+    var correctLetter = currentPhrase[index]; // Accept only valid alphabetic inputs and check if it's the correct letter
 
     if (value.match(/^[A-Z]$/)) {
-      playerGuesses[index] = value;
+      if (value === correctLetter) {
+        // Correct letter - accept it
+        playerGuesses[index] = value;
+        event.target.style.backgroundColor = '#d4edda'; // Light green background for correct
+
+        event.target.style.color = '#155724'; // Dark green text
+        // Move focus to next empty input
+
+        var nextInput = findNextEmptyInput(index);
+
+        if (nextInput) {
+          setTimeout(function () {
+            return nextInput.focus();
+          }, 100);
+        }
+      } else {
+        // Incorrect letter - reject it with visual feedback
+        event.target.value = ''; // Clear invalid input
+
+        event.target.style.backgroundColor = '#f8d7da'; // Light red background for incorrect
+
+        event.target.style.color = '#721c24'; // Dark red text
+
+        event.target.classList.add('shake'); // Add shake animation
+        // Reset styles and animation after a short delay
+
+        setTimeout(function () {
+          event.target.style.backgroundColor = '';
+          event.target.style.color = '';
+          event.target.classList.remove('shake');
+        }, 500);
+        delete playerGuesses[index];
+      }
     } else {
       event.target.value = ''; // Clear invalid input
 
@@ -129,6 +167,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     checkWinCondition();
+  } // Helper function to find the next empty input field
+
+
+  function findNextEmptyInput(currentIndex) {
+    var inputs = document.querySelectorAll('.cryptogram-cell input');
+    var currentIndexNum = parseInt(currentIndex);
+
+    for (var i = 0; i < inputs.length; i++) {
+      var input = inputs[i];
+      var inputIndex = parseInt(input.dataset.index);
+
+      if (inputIndex > currentIndexNum && input.value === '') {
+        return input;
+      }
+    }
+
+    return null;
   } // Check if the player has won
 
 
