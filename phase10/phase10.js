@@ -290,8 +290,7 @@ class Phase10Game {constructor() {
                 return;
             }
         }
-        
-        const discardedCard = currentPlayer.hand.splice(cardIndex, 1)[0];
+          const discardedCard = currentPlayer.hand.splice(cardIndex, 1)[0];
         this.discardPile.push(discardedCard);
 
         console.log(`${currentPlayer.name} discarded:`, this.getCardDisplay(discardedCard));
@@ -305,8 +304,26 @@ class Phase10Game {constructor() {
         // Check if player has no cards left (went out)
         if (currentPlayer.hand.length === 0 && currentPlayer.hasCompletedPhase) {
             this.endRound();
-        } else {
-            this.nextPlayer();
+        } else {            // Check if a skip card was discarded
+            if (discardedCard.type === 'skip') {
+                console.log(`${currentPlayer.name} played a skip card! Next player loses their turn.`);
+                
+                // Get the name of the player who will be skipped
+                const nextPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+                const skippedPlayer = this.players[nextPlayerIndex];
+                
+                // Show skip notification
+                this.showSkipNotification(currentPlayer.name, skippedPlayer.name);
+                
+                // Skip the next player by advancing twice
+                this.nextPlayer(); // Move to next player (who gets skipped)
+                
+                // In games with more than 2 players, advance to the player after the skipped one
+                // In 2-player games, this will cycle back to the original player (giving them consecutive turns)
+                this.nextPlayer(); // Move to the player after the skipped one
+            } else {
+                this.nextPlayer();
+            }
         }
 
         this.updateGameDisplay();
@@ -1526,6 +1543,60 @@ class Phase10Game {constructor() {
         }
         
         hintElement.textContent = hint;
+    }    showSkipNotification(playerName, skippedPlayerName) {
+        // Create a temporary notification element
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: skipNotification 0.5s ease-out;
+        `;
+        
+        // Check if this results in consecutive turns for the same player (2-player game)
+        const willGetConsecutiveTurn = this.players.length === 2;
+        const message = willGetConsecutiveTurn 
+            ? `${skippedPlayerName} loses their turn<br/>${playerName} gets to play again!`
+            : `${skippedPlayerName} loses their turn`;
+        
+        notification.innerHTML = `
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚫</div>
+            <div>${playerName} played a Skip card!</div>
+            <div style="font-size: 1rem; margin-top: 0.5rem;">${message}</div>
+        `;
+        
+        // Add animation keyframes if not already present
+        if (!document.getElementById('skip-animation-styles')) {
+            const style = document.createElement('style');
+            style.id = 'skip-animation-styles';
+            style.textContent = `
+                @keyframes skipNotification {
+                    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                    50% { transform: translate(-50%, -50%) scale(1.1); }
+                    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(notification);
+        
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 3000);
     }
 }
 
