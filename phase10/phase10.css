@@ -438,10 +438,23 @@ header h1 {
     padding: 1rem;
     min-height: 120px;
     transition: all 0.3s ease;
+    background: rgba(248, 249, 250, 0.5);
 }
 
 .phase-group:hover {
     border-color: var(--primary-color);
+    background: rgba(var(--primary-color-rgb, 98, 0, 238), 0.05);
+}
+
+.group-header {
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    padding: 0.25rem;
+    background: rgba(var(--primary-color-rgb, 98, 0, 238), 0.1);
+    border-radius: 6px;
 }
 
 .drop-zone {
@@ -455,14 +468,23 @@ header h1 {
     border-radius: var(--border-radius);
     transition: all 0.3s ease;
     position: relative;
+    background: white;
 }
 
-.drop-zone:empty::before {
-    content: "Drop selected cards here";
+.drop-placeholder {
     color: var(--text-secondary);
     font-style: italic;
-    position: absolute;
+    opacity: 0.7;
     pointer-events: none;
+}
+
+.phase-card {
+    transition: all 0.2s ease;
+}
+
+.phase-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Card Styles */
@@ -657,6 +679,40 @@ header h1 {
     margin-top: 0.5rem;
 }
 
+.phase-group-display {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.phase-group-1, .phase-group-2 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    background: rgba(248, 249, 250, 0.8);
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.phase-group-1:not(:empty)::before {
+    content: "Group 1: ";
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-right: 0.5rem;
+    align-self: center;
+}
+
+.phase-group-2:not(:empty)::before {
+    content: "Group 2: ";
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--secondary-color);
+    margin-right: 0.5rem;
+    align-self: center;
+}
+
 .mini-card {
     display: inline-block;
     padding: 0.25rem 0.5rem;
@@ -750,6 +806,23 @@ header h1 {
     
     .phase-builder-area {
         flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .phase-group {
+        min-height: 100px;
+    }
+    
+    .group-header {
+        font-size: 0.8rem;
+    }
+    
+    .phase-group-display {
+        gap: 0.25rem;
+    }
+    
+    .phase-group-1, .phase-group-2 {
+        padding: 0.25rem;
     }
     
     .hand-cards {
@@ -773,4 +846,85 @@ header h1 {
         margin: 2% auto;
         padding: 1rem;
     }
+}
+
+/* Individual group drop zones for completed phases */
+.phase-group-display .phase-group-1,
+.phase-group-display .phase-group-2 {
+    position: relative;
+    min-height: 50px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin: 0.25rem 0;
+    transition: all 0.3s ease;
+}
+
+.phase-group-display .phase-group-1.completed-phase-drop-zone,
+.phase-group-display .phase-group-2.completed-phase-drop-zone {
+    border: 2px dashed #ccc;
+    cursor: pointer;
+}
+
+.phase-group-display .phase-group-1.completed-phase-drop-zone:hover,
+.phase-group-display .phase-group-2.completed-phase-drop-zone:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(var(--primary-color-rgb, 98, 0, 238), 0.05);
+}
+
+.phase-group-display .phase-group-1.completed-phase-drop-zone.drag-over,
+.phase-group-display .phase-group-2.completed-phase-drop-zone.drag-over {
+    background-color: rgba(var(--primary-color-rgb, 98, 0, 238), 0.1);
+    border-color: var(--primary-color);
+    border-style: solid;
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(var(--primary-color-rgb, 98, 0, 238), 0.3);
+}
+
+.group-label {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.phase-group-1 .group-label {
+    color: var(--primary-color);
+}
+
+.phase-group-2 .group-label {
+    color: var(--secondary-color, #03dac6);
+}
+
+/* Ensure completed phase cards display properly */
+.phase-group-display .mini-card {
+    margin: 0.125rem;
+}
+
+/* Add spacing between groups */
+.phase-group-display {
+    gap: 0.75rem;
+}
+
+.phase-group-display .phase-group-1:empty::after {
+    content: "Drop cards here for Group 1";
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.phase-group-display .phase-group-2:empty::after {
+    content: "Drop cards here for Group 2";
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.phase-group-display .phase-group-1:not(:empty)::after,
+.phase-group-display .phase-group-2:not(:empty)::after {
+    content: none;
 }

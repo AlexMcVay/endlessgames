@@ -299,12 +299,19 @@ class Phase10Game {constructor() {
         this.selectedCards = [];
         document.querySelectorAll('.card.selected').forEach(card => {
             card.classList.remove('selected');
-        });
-
-        // Check if player has no cards left (went out)
-        if (currentPlayer.hand.length === 0 && currentPlayer.hasCompletedPhase) {
-            this.endRound();
-        } else {            // Check if a skip card was discarded
+        });        // Check if player has no cards left (went out)
+        if (currentPlayer.hand.length === 0) {
+            if (currentPlayer.hasCompletedPhase) {
+                console.log(`${currentPlayer.name} went out! Ending round.`);
+                this.endRound();
+                return;
+            } else {
+                console.log(`${currentPlayer.name} has no cards but hasn't completed their phase. This shouldn't happen!`);
+                // Edge case handling - if somehow player has no cards without completing phase
+                this.endRound();
+                return;
+            }
+        } else {// Check if a skip card was discarded
             if (discardedCard.type === 'skip') {
                 console.log(`${currentPlayer.name} played a skip card! Next player loses their turn.`);
                 
@@ -365,15 +372,20 @@ class Phase10Game {constructor() {
         // Enable complete phase button if player has built valid phase
         const canComplete = this.canCompletePhase(currentPhase);
         completeBtn.disabled = !canComplete;
-    }canCompletePhase(phase) {
+    }    canCompletePhase(phase) {
         const currentPlayer = this.players[this.currentPlayerIndex];
         if (currentPlayer.hasCompletedPhase) return false;
 
         const group1 = this.phaseBuilder.group1;
         const group2 = this.phaseBuilder.group2;
 
+        // For single-group phases, combine both groups for validation
+        const needsOnlyOneGroup = (phase.sets.length <= 1 && phase.runs.length <= 1 && 
+                                   !(phase.sets.length === 1 && phase.runs.length === 1)) ||
+                                  phase.special === 'color';
+
         if (phase.special === 'color') {
-            // Phase 8: 7 cards of one color
+            // Phase 8: 7 cards of one color - can use both groups
             const allCards = [...group1, ...group2];
             if (allCards.length < 7) return false;
             
@@ -382,7 +394,13 @@ class Phase10Game {constructor() {
             return uniqueColors.length === 1 && allCards.length >= 7;
         }
 
-        // Check sets and runs
+        // For single runs (phases 4, 5, 6), combine both groups
+        if (needsOnlyOneGroup && phase.runs.length === 1) {
+            const allCards = [...group1, ...group2];
+            return this.validateRun(allCards, phase.runs[0]);
+        }
+
+        // For phases with multiple groups
         let setsValid = true;
         let runsValid = true;
 
@@ -445,19 +463,36 @@ class Phase10Game {constructor() {
         }
         
         return false;
-    }
-
-    completePhase() {
+    }    completePhase() {
         const currentPlayer = this.players[this.currentPlayerIndex];
-        currentPlayer.hasCompletedPhase = true;
-        currentPlayer.completedPhases.push(currentPlayer.currentPhase);
+        const currentPhase = this.randomizedPhases[currentPlayer.currentPhase - 1];
+        
+        // For single-group phases, consolidate all cards into group1
+        const needsOnlyOneGroup = (currentPhase.sets.length <= 1 && currentPhase.runs.length <= 1 && 
+                                   !(currentPhase.sets.length === 1 && currentPhase.runs.length === 1)) ||
+                                  currentPhase.special === 'color';
 
-        // Move cards from phase builder to completed phases
-        this.completedPhases.push({
+        if (needsOnlyOneGroup && this.phaseBuilder.group2.length > 0) {
+            // Move all group2 cards to group1
+            this.phaseBuilder.group1.push(...this.phaseBuilder.group2);
+            this.phaseBuilder.group2 = [];
+        }
+
+        currentPlayer.hasCompletedPhase = true;
+        currentPlayer.completedPhases.push(currentPlayer.currentPhase);            // Move cards from phase builder to completed phases with proper group structure
+        const completedPhaseData = {
             player: currentPlayer.name,
             phase: currentPlayer.currentPhase,
-            cards: [...this.phaseBuilder.group1, ...this.phaseBuilder.group2]
-        });
+            group1: [...this.phaseBuilder.group1],
+            group2: [...this.phaseBuilder.group2],
+            // Keep legacy cards array for backwards compatibility
+            cards: [...this.phaseBuilder.group1, ...this.phaseBuilder.group2],
+            // Add metadata for better handling
+            phaseRequirements: currentPhase,
+            completedAt: Date.now()
+        };
+        
+        this.completedPhases.push(completedPhaseData);
 
         // Remove cards from player's hand
         const allPhaseCards = [...this.phaseBuilder.group1, ...this.phaseBuilder.group2];
@@ -466,14 +501,19 @@ class Phase10Game {constructor() {
             if (handIndex !== -1) {
                 currentPlayer.hand.splice(handIndex, 1);
             }
-        });
-
-        // Clear phase builder
+        });        // Clear phase builder
         this.phaseBuilder = { group1: [], group2: [] };
         this.selectedCards = [];
 
+        // Check if player has no cards left after completing phase
+        if (currentPlayer.hand.length === 0) {
+            console.log(`${currentPlayer.name} went out by completing their phase! Ending round.`);
+            this.endRound();
+            return;
+        }
+
         this.updateGameDisplay();
-    }    endTurn() {
+    }endTurn() {
         const currentPlayer = this.players[this.currentPlayerIndex];
         
         // For human players, enforce proper turn sequence
@@ -527,7 +567,8 @@ class Phase10Game {constructor() {
         // AI follows proper turn sequence:
         // 1. Draw a card (mandatory)
         // 2. Try to complete phase if possible
-        // 3. Discard a card (mandatory)
+        // 3. Try to add cards to completed phases (if AI has completed its own phase)
+        // 4. Discard a card (mandatory to end turn)
 
         console.log(`${currentPlayer.name} is making a move...`);
 
@@ -541,12 +582,19 @@ class Phase10Game {constructor() {
                 this.aiTryCompletePhase();
             }
 
-            // Step 3: Discard a card (mandatory to end turn)
+            // Step 3: Try to add cards to completed phases (if AI has completed its own phase)
+            if (currentPlayer.hasCompletedPhase && this.completedPhases.length > 0) {
+                setTimeout(() => {
+                    this.aiTryAddToCompletedPhases();
+                }, 500);
+            }
+
+            // Step 4: Discard a card (mandatory to end turn)
             setTimeout(() => {
                 this.aiDiscardCard();
             }, 1000);
         }, 800);
-    }    aiDrawCard() {
+    }aiDrawCard() {
         const currentPlayer = this.players[this.currentPlayerIndex];
         
         // AI logic: Check if discard pile has useful card
@@ -641,11 +689,54 @@ class Phase10Game {constructor() {
             bestPhaseArrangement.group2.forEach(card => {
                 const index = currentPlayer.hand.findIndex(h => h.id === card.id);
                 if (index !== -1) currentPlayer.hand.splice(index, 1);
-            });
-
-            // Complete the phase
+            });            // Complete the phase
             this.completePhase();
             console.log(`${currentPlayer.name} completed Phase ${currentPlayer.currentPhase}!`);
+        }
+    }
+
+    aiTryAddToCompletedPhases() {
+        const currentPlayer = this.players[this.currentPlayerIndex];
+        
+        // Only attempt if AI has completed its own phase and has cards left
+        if (!currentPlayer.hasCompletedPhase || currentPlayer.hand.length === 0) {
+            return;
+        }
+
+        // Try to add cards to each completed phase
+        for (let phaseIndex = 0; phaseIndex < this.completedPhases.length; phaseIndex++) {
+            const completedPhase = this.completedPhases[phaseIndex];
+            
+            // Find a card that can be added to this phase
+            for (let cardIndex = 0; cardIndex < currentPlayer.hand.length; cardIndex++) {
+                const card = currentPlayer.hand[cardIndex];
+                
+                // Check if card can be added to any group of this phase
+                const canAddToGroup1 = completedPhase.group1 && 
+                    this.canAddCardToCompletedPhase(card, completedPhase, 1);
+                const canAddToGroup2 = completedPhase.group2 && 
+                    this.canAddCardToCompletedPhase(card, completedPhase, 2);
+                
+                if (canAddToGroup1 || canAddToGroup2) {
+                    // Prefer to add to the group that makes more sense
+                    const targetGroup = canAddToGroup1 ? 1 : 2;
+                    
+                    console.log(`${currentPlayer.name} is adding ${this.getCardDisplay(card)} to ${completedPhase.player}'s Phase ${completedPhase.phase} group ${targetGroup}`);
+                    
+                    // Use the existing addCardToCompletedPhase logic, but override the AI restriction
+                    const originalIsAI = currentPlayer.isAI;
+                    currentPlayer.isAI = false; // Temporarily allow AI to use this function
+                    this.hasDrawnThisTurn = true; // Set this so the function allows the addition
+                    
+                    this.addCardToCompletedPhase(cardIndex, phaseIndex, targetGroup);
+                    
+                    // Restore AI status
+                    currentPlayer.isAI = originalIsAI;
+                    
+                    // Only add one card per turn to avoid being too aggressive
+                    return;
+                }
+            }
         }
     }
 
@@ -1105,73 +1196,204 @@ class Phase10Game {constructor() {
         }
 
         const currentPlayer = this.players[this.currentPlayerIndex];
-        const canAddToOtherPhases = currentPlayer.hasCompletedPhase && !currentPlayer.isAI && this.hasDrawnThisTurn;
-
-        this.completedPhases.forEach((phase, phaseIndex) => {
+        const canAddToOtherPhases = currentPlayer.hasCompletedPhase && !currentPlayer.isAI && this.hasDrawnThisTurn;        this.completedPhases.forEach((phase, phaseIndex) => {
             const phaseDiv = document.createElement('div');
             phaseDiv.className = 'completed-phase';
             
-            const cardsHtml = phase.cards.map(card => `<span class="mini-card ${card.color}">${this.getCardDisplay(card)}</span>`).join('');
+            // Get the original phase requirements for better display
+            const phaseRequirements = this.randomizedPhases[phase.phase - 1];
+            let phaseDescription = `Phase ${phase.phase}: ${phaseRequirements.description}`;
+            
+            // Use the stored group structure if available, otherwise fall back to reconstruction
+            let group1Cards = [];
+            let group2Cards = [];
+            
+            if (phase.group1 && phase.group2) {
+                // Use the stored group structure
+                group1Cards = phase.group1;
+                group2Cards = phase.group2;
+            } else {
+                // Fall back to legacy reconstruction for backwards compatibility
+                if (phaseRequirements.special === 'color') {
+                    // For color phases, show all cards together
+                    group1Cards = phase.cards;
+                } else if (phaseRequirements.sets.length > 0 && phaseRequirements.runs.length > 0) {
+                    // For mixed phases (set + run), try to separate logically
+                    const cardsByNumber = {};
+                    const wildcards = [];
+                    
+                    phase.cards.forEach(card => {
+                        if (card.type === 'wild') {
+                            wildcards.push(card);
+                        } else if (card.type === 'number') {
+                            if (!cardsByNumber[card.number]) cardsByNumber[card.number] = [];
+                            cardsByNumber[card.number].push(card);
+                        }
+                    });
+                    
+                    // Find the most frequent number (likely the set)
+                    let maxCount = 0;
+                    let setNumber = null;
+                    Object.keys(cardsByNumber).forEach(num => {
+                        if (cardsByNumber[num].length > maxCount) {
+                            maxCount = cardsByNumber[num].length;
+                            setNumber = num;
+                        }
+                    });
+                    
+                    if (setNumber) {
+                        group1Cards = cardsByNumber[setNumber];
+                        group2Cards = phase.cards.filter(card => 
+                            !(card.type === 'number' && card.number == setNumber)
+                        );
+                    } else {
+                        group1Cards = phase.cards.slice(0, Math.ceil(phase.cards.length / 2));
+                        group2Cards = phase.cards.slice(Math.ceil(phase.cards.length / 2));
+                    }
+                } else {
+                    // For pure sets or runs, split logically or show together
+                    if (phaseRequirements.sets.length === 2) {
+                        // Split into two groups for two sets
+                        group1Cards = phase.cards.slice(0, Math.ceil(phase.cards.length / 2));
+                        group2Cards = phase.cards.slice(Math.ceil(phase.cards.length / 2));
+                    } else {
+                        // Single group
+                        group1Cards = phase.cards;
+                    }
+                }
+            }
+            
+            const group1Html = group1Cards.map(card => 
+                `<span class="mini-card ${card.color}">${this.getCardDisplay(card)}</span>`
+            ).join('');
+            
+            const group2Html = group2Cards.length > 0 ? 
+                group2Cards.map(card => 
+                    `<span class="mini-card ${card.color}">${this.getCardDisplay(card)}</span>`
+                ).join('') : '';
             
             // If current player can add to other phases, make it a drop zone
             if (canAddToOtherPhases) {
+                let groupsHtml = `<div class="phase-group-display">`;
+                  // Group 1 drop zone with proper title
+                let group1Title = '';
+                if (phaseRequirements.special === 'color') {
+                    group1Title = '7 Cards of One Color';
+                } else if (phaseRequirements.sets.length > 0) {
+                    if (phaseRequirements.sets.length === 1) {
+                        group1Title = `Set of ${phaseRequirements.sets[0]}`;
+                    } else {
+                        group1Title = `Set of ${phaseRequirements.sets[0]}`;
+                    }
+                } else if (phaseRequirements.runs.length > 0) {
+                    group1Title = `Run of ${phaseRequirements.runs[0]}`;
+                } else {
+                    group1Title = 'Cards';
+                }
+                
+                groupsHtml += `<div class="phase-group-1 completed-phase-drop-zone" data-phase-index="${phaseIndex}" data-group="1">
+                    <div class="group-label">${group1Title}:</div>
+                    ${group1Html}
+                </div>`;
+                
+                // Group 2 drop zone (only if group2 exists or if this phase type supports it)
+                if (group2Cards.length > 0 || phaseRequirements.sets.length === 2 || 
+                    (phaseRequirements.sets.length > 0 && phaseRequirements.runs.length > 0)) {
+                    
+                    let group2Title = '';
+                    if (phaseRequirements.sets.length === 2) {
+                        group2Title = `Set of ${phaseRequirements.sets[1]}`;
+                    } else if (phaseRequirements.sets.length > 0 && phaseRequirements.runs.length > 0) {
+                        group2Title = `Run of ${phaseRequirements.runs[0]}`;
+                    } else {
+                        group2Title = 'Additional Cards';
+                    }
+                    
+                    groupsHtml += `<div class="phase-group-2 completed-phase-drop-zone" data-phase-index="${phaseIndex}" data-group="2">
+                        <div class="group-label">${group2Title}:</div>
+                        ${group2Html}
+                    </div>`;
+                }
+                
+                groupsHtml += `</div>`;
+                
                 phaseDiv.innerHTML = `
-                    <h4>${phase.player} - Phase ${phase.phase} <span class="add-hint">(Drop cards here to add)</span></h4>
-                    <div class="phase-cards completed-phase-drop-zone" data-phase-index="${phaseIndex}">
-                        ${cardsHtml}
+                    <h4>${phase.player} - ${phaseDescription} <span class="add-hint">(Drop cards on specific groups)</span></h4>
+                    <div class="phase-cards">
+                        ${groupsHtml}
                     </div>
                 `;
                 
-                // Set up drop zone for adding cards to completed phases
-                const dropZone = phaseDiv.querySelector('.completed-phase-drop-zone');
-                dropZone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    dropZone.classList.add('drag-over');
-                });
-
-                dropZone.addEventListener('dragleave', (e) => {
-                    if (!dropZone.contains(e.relatedTarget)) {
-                        dropZone.classList.remove('drag-over');
-                    }
-                });                dropZone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropZone.classList.remove('drag-over');
+                // Set up drop zones for both groups
+                const group1DropZone = phaseDiv.querySelector('[data-group="1"]');
+                const group2DropZone = phaseDiv.querySelector('[data-group="2"]');
+                
+                [group1DropZone, group2DropZone].forEach(dropZone => {
+                    if (!dropZone) return;
                     
-                    try {
-                        const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                        const { cardId, originalIndex } = dragData;
-                        
-                        // Find the current index of the card by its ID
-                        const currentPlayer = this.players[this.currentPlayerIndex];
-                        const currentIndex = currentPlayer.hand.findIndex(card => card.id === cardId);
-                        
-                        if (currentIndex === -1) {
-                            console.warn(`Card with ID ${cardId} not found in player hand`);
-                            return;
+                    dropZone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        dropZone.classList.add('drag-over');
+                    });
+
+                    dropZone.addEventListener('dragleave', (e) => {
+                        if (!dropZone.contains(e.relatedTarget)) {
+                            dropZone.classList.remove('drag-over');
                         }
+                    });
+
+                    dropZone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        dropZone.classList.remove('drag-over');
                         
-                        this.addCardToCompletedPhase(currentIndex, phaseIndex);
-                    } catch (error) {
-                        console.error('Error processing completed phase drop:', error);
-                        // Fallback to old method for backwards compatibility
-                        const cardIndex = parseInt(e.dataTransfer.getData('text/plain'));
-                        if (!isNaN(cardIndex)) {
-                            this.addCardToCompletedPhase(cardIndex, phaseIndex);
+                        try {
+                            const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                            const { cardId, originalIndex } = dragData;
+                            
+                            // Find the current index of the card by its ID
+                            const currentPlayer = this.players[this.currentPlayerIndex];
+                            const currentIndex = currentPlayer.hand.findIndex(card => card.id === cardId);
+                            
+                            if (currentIndex === -1) {
+                                console.warn(`Card with ID ${cardId} not found in player hand`);
+                                return;
+                            }
+                            
+                            const targetPhaseIndex = parseInt(dropZone.dataset.phaseIndex);
+                            const targetGroup = parseInt(dropZone.dataset.group);
+                            this.addCardToCompletedPhase(currentIndex, targetPhaseIndex, targetGroup);
+                        } catch (error) {
+                            console.error('Error processing completed phase drop:', error);
+                            // Fallback to old method for backwards compatibility
+                            const cardIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                            if (!isNaN(cardIndex)) {
+                                const targetPhaseIndex = parseInt(dropZone.dataset.phaseIndex);
+                                const targetGroup = parseInt(dropZone.dataset.group);
+                                this.addCardToCompletedPhase(cardIndex, targetPhaseIndex, targetGroup);
+                            }
                         }
-                    }
+                    });
                 });
             } else {
+                let groupsHtml = `<div class="phase-group-display">
+                    <div class="phase-group-1">${group1Html}</div>`;
+                
+                if (group2Html) {
+                    groupsHtml += `<div class="phase-group-2">${group2Html}</div>`;
+                }
+                groupsHtml += `</div>`;
+                
                 phaseDiv.innerHTML = `
-                    <h4>${phase.player} - Phase ${phase.phase}</h4>
+                    <h4>${phase.player} - ${phaseDescription}</h4>
                     <div class="phase-cards">
-                        ${cardsHtml}
+                        ${groupsHtml}
                     </div>
                 `;
             }            
             container.appendChild(phaseDiv);
         });
-    }    addCardToCompletedPhase(cardIndex, phaseIndex) {
+    }    addCardToCompletedPhase(cardIndex, phaseIndex, targetGroup = null) {
         const currentPlayer = this.players[this.currentPlayerIndex];
         
         // Validate that the player can add to other phases
@@ -1199,15 +1421,45 @@ class Phase10Game {constructor() {
         }
         
         // Validate that the card can be legally added to this phase
-        if (!this.canAddCardToCompletedPhase(card, completedPhase)) {
-            alert('This card cannot be legally added to that phase.');
+        if (!this.canAddCardToCompletedPhase(card, completedPhase, targetGroup)) {
+            alert('This card cannot be legally added to that phase group.');
             return;
         }
         
-        console.log(`Adding card ${this.getCardDisplay(card)} (ID: ${card.id}) from hand index ${cardIndex} to completed phase ${phaseIndex}`);
+        console.log(`Adding card ${this.getCardDisplay(card)} (ID: ${card.id}) from hand index ${cardIndex} to completed phase ${phaseIndex} group ${targetGroup || 'general'}`);
+          // Add card to the appropriate group with improved logic
+        if (targetGroup === 1) {
+            if (!completedPhase.group1) completedPhase.group1 = [];
+            completedPhase.group1.push(card);
+        } else if (targetGroup === 2) {
+            if (!completedPhase.group2) completedPhase.group2 = [];
+            completedPhase.group2.push(card);
+        } else {
+            // Default behavior - add to the most appropriate group or general cards array
+            if (completedPhase.group1 && completedPhase.group2) {
+                // Try to determine best group based on phase requirements
+                const phaseRequirements = this.randomizedPhases[completedPhase.phase - 1];
+                if (this.canAddCardToGroup(card, completedPhase.group1, phaseRequirements, 1)) {
+                    completedPhase.group1.push(card);
+                } else if (this.canAddCardToGroup(card, completedPhase.group2, phaseRequirements, 2)) {
+                    completedPhase.group2.push(card);
+                } else {
+                    // Fallback to group1
+                    completedPhase.group1.push(card);
+                }
+            } else {
+                // Legacy fallback - ensure we have proper group structure
+                if (!completedPhase.group1) completedPhase.group1 = [];
+                completedPhase.group1.push(card);
+            }
+        }
         
-        // Add card to the completed phase
-        completedPhase.cards.push(card);
+        // Also add to legacy cards array for backwards compatibility
+        if (completedPhase.cards) {
+            completedPhase.cards.push(card);
+        } else {
+            completedPhase.cards = [...(completedPhase.group1 || []), ...(completedPhase.group2 || [])];
+        }
         
         // Remove card from player's hand
         currentPlayer.hand.splice(cardIndex, 1);
@@ -1217,13 +1469,105 @@ class Phase10Game {constructor() {
         document.querySelectorAll('.card.selected').forEach(card => {
             card.classList.remove('selected');
         });
+          console.log(`${currentPlayer.name} added ${this.getCardDisplay(card)} to ${completedPhase.player}'s Phase ${completedPhase.phase} group ${targetGroup || 'general'}`);
         
-        console.log(`${currentPlayer.name} added ${this.getCardDisplay(card)} to ${completedPhase.player}'s Phase ${completedPhase.phase}`);
+        // Check if player has no cards left after adding to completed phase
+        if (currentPlayer.hand.length === 0) {
+            console.log(`${currentPlayer.name} went out by adding to completed phase! Ending round.`);
+            this.endRound();
+            return;
+        }
         
         this.updateGameDisplay();
+    }    canAddCardToCompletedPhase(card, completedPhase, targetGroup = null) {
+        // Get the original phase requirements
+        const phaseRequirements = this.randomizedPhases[completedPhase.phase - 1];
+        
+        // If targeting a specific group, check that group
+        if (targetGroup === 1 && completedPhase.group1) {
+            return this.canAddCardToGroup(card, completedPhase.group1, phaseRequirements, 1);
+        } else if (targetGroup === 2 && completedPhase.group2) {
+            return this.canAddCardToGroup(card, completedPhase.group2, phaseRequirements, 2);
+        }
+        
+        // Legacy check - see if card can be added to any group
+        if (completedPhase.group1 && this.canAddCardToGroup(card, completedPhase.group1, phaseRequirements, 1)) {
+            return true;
+        }
+        if (completedPhase.group2 && this.canAddCardToGroup(card, completedPhase.group2, phaseRequirements, 2)) {
+            return true;
+        }
+        
+        // Fallback to legacy validation
+        return this.legacyCanAddCardToCompletedPhase(card, completedPhase);
     }
 
-    canAddCardToCompletedPhase(card, completedPhase) {
+    canAddCardToGroup(card, groupCards, phaseRequirements, groupNumber) {
+        // For color phases, card must match the color or be wild
+        if (phaseRequirements.special === 'color') {
+            if (card.type === 'wild') return true;
+            
+            // Find the dominant color in the group
+            const nonWildCards = groupCards.filter(c => c.type !== 'wild');
+            if (nonWildCards.length === 0) return true; // All wilds, any color card works
+            
+            const dominantColor = nonWildCards[0].color;
+            return card.color === dominantColor;
+        }
+        
+        // For set phases
+        if (phaseRequirements.sets.length > 0) {
+            // Check if this is a set group
+            const isSetGroup = (groupNumber === 1 && phaseRequirements.sets.length >= 1) ||
+                              (groupNumber === 2 && phaseRequirements.sets.length === 2);
+            
+            if (isSetGroup) {
+                // Allow wild cards or cards that match existing numbers in sets
+                if (card.type === 'wild') return true;
+                
+                if (card.type === 'number') {
+                    const existingNumbers = groupCards
+                        .filter(c => c.type === 'number')
+                        .map(c => c.number);
+                    
+                    // Check if this number already exists in the group (can extend a set)
+                    if (existingNumbers.length === 0) return true; // Empty group, any number works
+                    return existingNumbers.includes(card.number);
+                }
+            }
+        }
+        
+        // For run phases
+        if (phaseRequirements.runs.length > 0) {
+            // Check if this is a run group
+            const isRunGroup = (groupNumber === 1 && phaseRequirements.runs.length >= 1) ||
+                              (groupNumber === 2 && phaseRequirements.sets.length > 0 && phaseRequirements.runs.length > 0);
+            
+            if (isRunGroup) {
+                if (card.type === 'wild') return true;
+                
+                if (card.type === 'number') {
+                    const existingNumbers = groupCards
+                        .filter(c => c.type === 'number')
+                        .map(c => c.number)
+                        .sort((a, b) => a - b);
+                    
+                    if (existingNumbers.length === 0) return true; // Empty group, any number works
+                    
+                    const minNumber = existingNumbers[0];
+                    const maxNumber = existingNumbers[existingNumbers.length - 1];
+                    
+                    // Card can extend the run if it's adjacent to the ends
+                    return card.number === minNumber - 1 || card.number === maxNumber + 1;
+                }
+            }
+        }
+        
+        // Default to allowing wild cards
+        return card.type === 'wild';
+    }
+
+    legacyCanAddCardToCompletedPhase(card, completedPhase) {
         // Get the original phase requirements
         const phaseRequirements = this.randomizedPhases[completedPhase.phase - 1];
         
@@ -1412,9 +1756,10 @@ class Phase10Game {constructor() {
                         this.addCardToPhaseBuilder(cardIndex, groupNumber);
                     }
                 }
-            });
-        });
-    }    addCardToPhaseBuilder(cardIndex, groupNumber) {
+            });        });
+    }
+
+    addCardToPhaseBuilder(cardIndex, groupNumber) {
         const currentPlayer = this.players[this.currentPlayerIndex];
         
         // Prevent AI from using drag and drop
@@ -1426,6 +1771,17 @@ class Phase10Game {constructor() {
         // Ensure player has drawn a card this turn
         if (!this.hasDrawnThisTurn) {
             alert('You must draw a card before building your phase.');
+            return;
+        }
+
+        // Check if trying to add to group 2 when only one group is needed
+        const currentPhase = this.randomizedPhases[currentPlayer.currentPhase - 1];
+        const needsOnlyOneGroup = (currentPhase.sets.length <= 1 && currentPhase.runs.length <= 1 && 
+                                   !(currentPhase.sets.length === 1 && currentPhase.runs.length === 1)) ||
+                                  currentPhase.special === 'color';
+        
+        if (groupNumber === 2 && needsOnlyOneGroup) {
+            alert('This phase only requires one group. Please add cards to Group 1.');
             return;
         }
         
@@ -1462,37 +1818,104 @@ class Phase10Game {constructor() {
         console.log(`Card successfully moved to phase builder group ${groupNumber}:`, this.getCardDisplay(card));
         
         this.updateGameDisplay();
-        this.updatePhaseBuilder();
-        this.updatePhaseBuilderButtons();
-    }updatePhaseBuilder() {
+        this.updatePhaseBuilder();        this.updatePhaseBuilderButtons();
+    }    updatePhaseBuilder() {
+        const currentPlayer = this.players[this.currentPlayerIndex];
+        const currentPhase = this.randomizedPhases[currentPlayer.currentPhase - 1];
+        
         const group1Zone = document.querySelector('[data-group="1"] .drop-zone');
         const group2Zone = document.querySelector('[data-group="2"] .drop-zone');
+        const group1Header = document.querySelector('[data-group="1"] .group-header');
+        const group2Header = document.querySelector('[data-group="2"] .group-header');
+        const group2Container = document.querySelector('[data-group="2"]');
 
-        // Clear existing cards
+        // Determine if this phase needs only one group
+        const needsOnlyOneGroup = (currentPhase.sets.length <= 1 && currentPhase.runs.length <= 1 && 
+                                   !(currentPhase.sets.length === 1 && currentPhase.runs.length === 1)) ||
+                                  currentPhase.special === 'color';
+
+        // Show/hide Group 2 based on phase requirements
+        if (needsOnlyOneGroup) {
+            group2Container.style.display = 'none';
+        } else {
+            group2Container.style.display = 'block';
+        }        // Update group headers with phase requirements and descriptions
+        if (currentPhase.special === 'color') {
+            group1Header.textContent = `7 Cards of One Color`;
+        } else {
+            let group1Title = '';
+            let group2Title = '';
+            
+            if (currentPhase.sets.length > 0) {
+                if (currentPhase.sets.length === 1) {
+                    group1Title = `Set of ${currentPhase.sets[0]}`;
+                    if (currentPhase.runs.length > 0) {
+                        group2Title = `Run of ${currentPhase.runs[0]}`;
+                    } else {
+                        group2Title = 'Additional Cards';
+                    }
+                } else if (currentPhase.sets.length === 2) {
+                    group1Title = `Set of ${currentPhase.sets[0]}`;
+                    group2Title = `Set of ${currentPhase.sets[1]}`;
+                }
+            } else if (currentPhase.runs.length > 0) {
+                group1Title = `Run of ${currentPhase.runs[0]}`;
+                group2Title = 'Additional Cards';
+            }
+            
+            group1Header.textContent = group1Title;
+            if (!needsOnlyOneGroup) {
+                group2Header.textContent = group2Title;
+            }
+        }// Clear existing cards
         group1Zone.innerHTML = '';
         group2Zone.innerHTML = '';
 
-        // Add cards to group 1 (UPDATED: cards can no longer be removed from phase groups)
+        // Add cards to group 1
         this.phaseBuilder.group1.forEach((card, index) => {
             const cardElement = this.createCardElement(card);
-            // Remove click handler - cards can no longer be removed from phase groups
-            cardElement.style.cursor = 'default';
-            cardElement.title = 'Card locked in phase group';
+            cardElement.classList.add('phase-card');
+            cardElement.style.cursor = 'pointer';
+            cardElement.title = 'Click to remove from phase group';
+            cardElement.addEventListener('click', () => {
+                this.removeCardFromPhaseBuilder(index, 'group1');
+            });
             group1Zone.appendChild(cardElement);
         });
 
-        // Add cards to group 2 (UPDATED: cards can no longer be removed from phase groups)
-        this.phaseBuilder.group2.forEach((card, index) => {
-            const cardElement = this.createCardElement(card);
-            // Remove click handler - cards can no longer be removed from phase groups
-            cardElement.style.cursor = 'default';
-            cardElement.title = 'Card locked in phase group';
-            group2Zone.appendChild(cardElement);
-        });
+        // Add cards to group 2 (only if group 2 is visible)
+        if (!needsOnlyOneGroup) {
+            this.phaseBuilder.group2.forEach((card, index) => {
+                const cardElement = this.createCardElement(card);
+                cardElement.classList.add('phase-card');
+                cardElement.style.cursor = 'pointer';
+                cardElement.title = 'Click to remove from phase group';
+                cardElement.addEventListener('click', () => {
+                    this.removeCardFromPhaseBuilder(index, 'group2');
+                });
+                group2Zone.appendChild(cardElement);
+            });
+        }
+
+        // Update placeholder text for empty zones
+        if (this.phaseBuilder.group1.length === 0) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'drop-placeholder';
+            placeholder.textContent = 'Drop cards here';
+            group1Zone.appendChild(placeholder);
+        }
+          if (!needsOnlyOneGroup && this.phaseBuilder.group2.length === 0) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'drop-placeholder';
+            placeholder.textContent = 'Drop cards here';
+            group2Zone.appendChild(placeholder);
+        }
 
         // Update phase hint
         this.updatePhaseHint();
-    }removeCardFromPhaseBuilder(cardIndex, groupKey) {
+    }
+
+    removeCardFromPhaseBuilder(cardIndex, groupKey) {
         const currentPlayer = this.players[this.currentPlayerIndex];
         
         // Prevent AI from using this function
@@ -1517,9 +1940,8 @@ class Phase10Game {constructor() {
         }
         
         this.updateGameDisplay();
-        this.updatePhaseBuilder();
         this.updatePhaseBuilderButtons();
-    }    updatePhaseHint() {
+    }updatePhaseHint() {
         const currentPlayer = this.players[this.currentPlayerIndex];
         const currentPhase = this.randomizedPhases[currentPlayer.currentPhase - 1];
         const hintElement = document.getElementById('phaseHint');
