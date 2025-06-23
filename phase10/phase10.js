@@ -113,9 +113,11 @@ class Phase10Game {constructor() {
     }
 
     updatePlayerInputs(playerCount) {
+        const player2Input = document.getElementById('player2Input');
         const player3Input = document.getElementById('player3Input');
         const player4Input = document.getElementById('player4Input');
 
+        player2Input.style.display = playerCount >= 2 ? 'block' : 'none';
         player3Input.style.display = playerCount >= 3 ? 'block' : 'none';
         player4Input.style.display = playerCount >= 4 ? 'block' : 'none';
     }    startGame() {
