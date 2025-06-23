@@ -49,9 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         return phrase.split('').map(char => (cipher[char] || char)).join('');
-    }
-
-    // Function to render the cryptogram board
+    }    // Function to render the cryptogram board
     function renderBoard() {
         cryptogramBoard.innerHTML = '';
 
@@ -59,44 +57,69 @@ document.addEventListener('DOMContentLoaded', () => {
         const cryptogramContainer = document.createElement('div');
         cryptogramContainer.classList.add('cryptogram-container');
 
-        encryptedPhrase.split('').forEach((char, index) => {
-            const cellContainer = document.createElement('div');
-            cellContainer.classList.add('cryptogram-cell-container');
+        // Split the phrase into words to prevent word breaking
+        const words = encryptedPhrase.split(' ');
+        let currentIndex = 0;
 
-            // Add number above the input or character
-            const numberCell = document.createElement('div');
-            numberCell.classList.add('cryptogram-number');
-            numberCell.textContent = char.match(/[A-Z]/) ? letterToNumberMap[currentPhrase[index]] : ''; // Use the same number for the same letter
-            cellContainer.appendChild(numberCell);
+        words.forEach((word, wordIndex) => {
+            // Create a word container to keep letters together
+            const wordContainer = document.createElement('div');
+            wordContainer.classList.add('cryptogram-word');
 
-            // Add input box for letters or static character for spaces/punctuation
-            if (char.match(/[A-Z]/)) {
-                const cell = document.createElement('div');
-                cell.classList.add('cryptogram-cell');                const input = document.createElement('input');
-                input.type = 'text';
-                input.maxLength = 1;
-                input.dataset.index = index;
-                input.value = playerGuesses[index] || '';
-                input.style.backgroundColor = ''; // Reset background color
-                input.style.color = ''; // Reset text color
-                input.addEventListener('input', handleInput);
-                input.addEventListener('keydown', handleKeyDown);
-                cell.appendChild(input);
+            // Process each character in the word
+            for (let i = 0; i < word.length; i++) {
+                const char = word[i];
+                const cellContainer = document.createElement('div');
+                cellContainer.classList.add('cryptogram-cell-container');
 
-                cellContainer.appendChild(cell);
-            } else {
-                // Add static character outside of the cell
-                const staticChar = document.createElement('div');
-                staticChar.classList.add('cryptogram-static');
-                staticChar.textContent = char;
-                cellContainer.appendChild(staticChar);
+                // Add number above the input or character
+                const numberCell = document.createElement('div');
+                numberCell.classList.add('cryptogram-number');
+                numberCell.textContent = char.match(/[A-Z]/) ? letterToNumberMap[currentPhrase[currentIndex]] : '';
+                cellContainer.appendChild(numberCell);
+
+                // Add input box for letters or static character for punctuation
+                if (char.match(/[A-Z]/)) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cryptogram-cell');
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.maxLength = 1;
+                    input.dataset.index = currentIndex;
+                    input.value = playerGuesses[currentIndex] || '';
+                    input.style.backgroundColor = ''; // Reset background color
+                    input.style.color = ''; // Reset text color
+                    input.addEventListener('input', handleInput);
+                    input.addEventListener('keydown', handleKeyDown);
+                    cell.appendChild(input);
+
+                    cellContainer.appendChild(cell);
+                } else {
+                    // Add static character for punctuation
+                    const staticChar = document.createElement('div');
+                    staticChar.classList.add('cryptogram-static');
+                    staticChar.textContent = char;
+                    cellContainer.appendChild(staticChar);
+                }
+
+                wordContainer.appendChild(cellContainer);
+                currentIndex++;
             }
 
-            cryptogramContainer.appendChild(cellContainer);
+            cryptogramContainer.appendChild(wordContainer);
+
+            // Add space after word (except for the last word)
+            if (wordIndex < words.length - 1) {
+                const spaceContainer = document.createElement('div');
+                spaceContainer.classList.add('cryptogram-space');
+                cryptogramContainer.appendChild(spaceContainer);
+                currentIndex++; // Account for the space character
+            }
         });
 
         cryptogramBoard.appendChild(cryptogramContainer);
-    }    // Handle input in the cryptogram cells
+    }// Handle input in the cryptogram cells
     function handleInput(event) {
         const index = event.target.dataset.index;
         const value = event.target.value.toUpperCase();

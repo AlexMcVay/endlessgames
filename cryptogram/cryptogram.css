@@ -10,9 +10,23 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
-    max-width: 600px;
+    gap: 5px;
+    max-width: 800px;
     margin: 20px auto;
+    line-height: 1.5;
+}
+
+.cryptogram-word {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    margin: 0 5px;
+    white-space: nowrap; /* Prevent word breaking */
+}
+
+.cryptogram-space {
+    width: 20px; /* Space between words */
+    flex-shrink: 0;
 }
 
 .cryptogram-cell-container {
