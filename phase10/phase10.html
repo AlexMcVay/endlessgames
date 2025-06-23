@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>    <meta charset="UTF-8">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phase 10 - MultigameApp</title>
+    <meta name="description" content="Play Phase 10 card game online! Complete all 10 phases from sets and runs to color collections. Single and multiplayer modes available. Free Phase 10 game with AI opponents.">
+    <meta name="keywords" content="Phase 10, card game, online game, multiplayer, sets, runs, Phase 10 rules">
+    <meta name="author" content="MultigameApp">
+    <title>Phase 10 Card Game Online - Free Multiplayer Phase 10</title>
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="phase10.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -16,12 +20,11 @@
         </div>
     </header>
 
-    <main>
+    <main role="main" aria-label="Phase 10 Game">
         <!-- Help Modal -->
-        <div id="helpModal" class="modal">
+        <div id="helpModal" class="modal" role="dialog" aria-labelledby="helpTitle" aria-hidden="true">
             <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>How to Play Phase 10</h2>
+                <span class="close" role="button" aria-label="Close help dialog" tabindex="0">&times;</span>                <h2 id="helpTitle">How to Play Phase 10</h2>
                 <div class="phases-list">
                     <h3>The 10 Phases:</h3>
                     <ol>
@@ -47,9 +50,8 @@
         </div>
 
         <!-- Game Setup Screen -->
-        <div id="setupScreen" class="screen active">
-            <div class="setup-container">
-                <h2>Game Setup</h2>                <div class="player-count">
+        <div id="setupScreen" class="screen active">            <div class="setup-container">
+                <h2>Game Setup</h2><div class="player-count">
                     <label for="playerCount">Number of Players:</label>
                     <select id="playerCount">
                         <option value="1">1 Player (vs AI)</option>
@@ -77,10 +79,11 @@
                 </div>
                 <button id="startGameBtn" class="start-btn">Start Game</button>
             </div>
-        </div>
-
-        <!-- Game Screen -->
+        </div>        <!-- Game Screen -->
         <div id="gameScreen" class="screen">
+            <!-- Screen reader announcements -->
+            <div id="announcements" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+            
             <!-- Game Info Panel -->
             <div class="game-info">
                 <div class="round-info">
@@ -100,10 +103,9 @@
             </div>
 
             <!-- Game Board -->
-            <div class="game-board">
-                <!-- Discard Pile -->
+            <div class="game-board">                <!-- Discard Pile -->
                 <div class="discard-pile">
-                    <h3>Discard Pile</h3>
+                    <h2>Discard Pile</h2>
                     <div id="discardPile" class="card-pile">
                         <div class="empty-pile">Empty</div>
                     </div>
@@ -111,7 +113,7 @@
 
                 <!-- Draw Pile -->
                 <div class="draw-pile">
-                    <h3>Draw Pile</h3>
+                    <h2>Draw Pile</h2>
                     <div id="drawPile" class="card-pile">
                         <div class="card-back">
                             <i class="fas fa-layer-group"></i>
@@ -121,26 +123,23 @@
 
                 <!-- Phase Display Area -->
                 <div class="phase-display">
-                    <h3>Completed Phases</h3>
+                    <h2>Completed Phases</h2>
                     <div id="completedPhases" class="completed-phases-area">
                         <div class="no-phases">No phases completed yet</div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Current Player's Hand -->
+            </div>            <!-- Current Player's Hand -->
             <div class="player-hand">
-                <h3>Your Hand</h3>
-                <div id="playerHand" class="hand-cards"></div>
-                <div class="hand-actions">
-                    <button id="completePhaseBtn" class="action-btn" disabled>Complete Phase</button>
-                    <button id="skipTurnBtn" class="action-btn" disabled>End Turn</button>
+                <h2>Your Hand</h2>
+                <div id="playerHand" class="hand-cards"></div>                <div class="hand-actions">
+                    <button id="completePhaseBtn" class="action-btn" disabled aria-describedby="currentPhaseText">Complete Phase</button>
+                    <button id="skipTurnBtn" class="action-btn" disabled aria-label="End your turn by discarding a card">End Turn</button>
                 </div>
             </div>
 
             <!-- Phase Building Area -->
             <div class="phase-builder">
-                <h3>Build Your Phase</h3>
+                <h2>Build Your Phase</h2>
                 <div id="phaseHint" class="phase-hint"></div>
                 <div id="phaseBuilder" class="phase-builder-area">
                     <div class="phase-group" data-group="1">

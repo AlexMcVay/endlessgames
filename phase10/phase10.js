@@ -68,21 +68,43 @@ class Phase10Game {constructor() {
         // Help modal events
         const helpBtn = document.getElementById('helpBtn');
         const helpModal = document.getElementById('helpModal');
-        const closeBtn = document.querySelector('.close');
-
-        helpBtn.addEventListener('click', () => {
+        const closeBtn = document.querySelector('.close');        helpBtn.addEventListener('click', () => {
             helpModal.style.display = 'block';
+            helpModal.setAttribute('aria-hidden', 'false');
+            closeBtn.focus(); // Focus on close button for accessibility
         });
 
         closeBtn.addEventListener('click', () => {
             helpModal.style.display = 'none';
+            helpModal.setAttribute('aria-hidden', 'true');
+            helpBtn.focus(); // Return focus to help button
+        });
+
+        // Add keyboard support for close button
+        closeBtn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                helpModal.style.display = 'none';
+                helpModal.setAttribute('aria-hidden', 'true');
+                helpBtn.focus();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && helpModal.style.display === 'block') {
+                helpModal.style.display = 'none';
+                helpModal.setAttribute('aria-hidden', 'true');
+                helpBtn.focus();
+            }
         });
 
         window.addEventListener('click', (e) => {
             if (e.target === helpModal) {
                 helpModal.style.display = 'none';
+                helpModal.setAttribute('aria-hidden', 'true');
             }
-        });        // Game action events
+        });// Game action events
         document.getElementById('drawPile').addEventListener('click', () => {
             const currentPlayer = this.players[this.currentPlayerIndex];
             if (!currentPlayer.isAI) {
@@ -503,14 +525,16 @@ class Phase10Game {constructor() {
             }
         });        // Clear phase builder
         this.phaseBuilder = { group1: [], group2: [] };
-        this.selectedCards = [];
-
-        // Check if player has no cards left after completing phase
+        this.selectedCards = [];        // Check if player has no cards left after completing phase
         if (currentPlayer.hand.length === 0) {
             console.log(`${currentPlayer.name} went out by completing their phase! Ending round.`);
+            this.announceToScreenReader(`${currentPlayer.name} completed their phase and went out! Round ending.`);
             this.endRound();
             return;
         }
+
+        // Announce phase completion
+        this.announceToScreenReader(`Phase ${currentPlayer.currentPhase} completed! You have ${currentPlayer.hand.length} cards remaining.`);
 
         this.updateGameDisplay();
     }endTurn() {
@@ -693,15 +717,16 @@ class Phase10Game {constructor() {
             this.completePhase();
             console.log(`${currentPlayer.name} completed Phase ${currentPlayer.currentPhase}!`);
         }
-    }
-
-    aiTryAddToCompletedPhases() {
+    }    aiTryAddToCompletedPhases() {
         const currentPlayer = this.players[this.currentPlayerIndex];
         
         // Only attempt if AI has completed its own phase and has cards left
         if (!currentPlayer.hasCompletedPhase || currentPlayer.hand.length === 0) {
+            console.log(`${currentPlayer.name} cannot add to completed phases: hasCompletedPhase=${currentPlayer.hasCompletedPhase}, cardsLeft=${currentPlayer.hand.length}`);
             return;
         }
+
+        console.log(`${currentPlayer.name} trying to add cards to completed phases. Available phases: ${this.completedPhases.length}`);
 
         // Try to add cards to each completed phase
         for (let phaseIndex = 0; phaseIndex < this.completedPhases.length; phaseIndex++) {
@@ -712,9 +737,9 @@ class Phase10Game {constructor() {
                 const card = currentPlayer.hand[cardIndex];
                 
                 // Check if card can be added to any group of this phase
-                const canAddToGroup1 = completedPhase.group1 && 
+                const canAddToGroup1 = completedPhase.group1 && completedPhase.group1.length > 0 && 
                     this.canAddCardToCompletedPhase(card, completedPhase, 1);
-                const canAddToGroup2 = completedPhase.group2 && 
+                const canAddToGroup2 = completedPhase.group2 && completedPhase.group2.length > 0 && 
                     this.canAddCardToCompletedPhase(card, completedPhase, 2);
                 
                 if (canAddToGroup1 || canAddToGroup2) {
@@ -723,21 +748,28 @@ class Phase10Game {constructor() {
                     
                     console.log(`${currentPlayer.name} is adding ${this.getCardDisplay(card)} to ${completedPhase.player}'s Phase ${completedPhase.phase} group ${targetGroup}`);
                     
-                    // Use the existing addCardToCompletedPhase logic, but override the AI restriction
-                    const originalIsAI = currentPlayer.isAI;
-                    currentPlayer.isAI = false; // Temporarily allow AI to use this function
-                    this.hasDrawnThisTurn = true; // Set this so the function allows the addition
+                    // Add the card directly to the completed phase
+                    const cardToAdd = currentPlayer.hand.splice(cardIndex, 1)[0];
                     
-                    this.addCardToCompletedPhase(cardIndex, phaseIndex, targetGroup);
+                    if (targetGroup === 1) {
+                        completedPhase.group1.push(cardToAdd);
+                    } else {
+                        completedPhase.group2.push(cardToAdd);
+                    }
                     
-                    // Restore AI status
-                    currentPlayer.isAI = originalIsAI;
+                    // Update the legacy cards array for backwards compatibility
+                    completedPhase.cards = [...completedPhase.group1, ...completedPhase.group2];
+                    
+                    // Update display
+                    this.updateGameDisplay();
                     
                     // Only add one card per turn to avoid being too aggressive
                     return;
                 }
             }
         }
+        
+        console.log(`${currentPlayer.name} found no cards to add to completed phases`);
     }
 
     aiFindBestPhaseArrangement(hand, phase) {
@@ -1096,8 +1128,12 @@ class Phase10Game {constructor() {
                 turnPhaseText = ' (Play cards or discard)';
             }
         }
+          document.getElementById('currentPlayerText').textContent = playerTurnText + turnPhaseText;
         
-        document.getElementById('currentPlayerText').textContent = playerTurnText + turnPhaseText;
+        // Announce turn changes to screen readers
+        if (!currentPlayer.isAI && this.hasDrawnThisTurn === false) {
+            this.announceToScreenReader(`It's your turn, ${currentPlayer.name}. Current phase: ${currentPhase.description}. Draw a card to start.`);
+        }
     }updatePlayerStatus() {
         const container = document.getElementById('playersContainer');
         container.innerHTML = '';
@@ -1863,6 +1899,7 @@ class Phase10Game {constructor() {
                 group2Title = 'Additional Cards';
             }
             
+            // Only show the phase requirement titles, not "Group 1"/"Group 2"
             group1Header.textContent = group1Title;
             if (!needsOnlyOneGroup) {
                 group2Header.textContent = group2Title;
@@ -2019,6 +2056,18 @@ class Phase10Game {constructor() {
                 notification.parentNode.removeChild(notification);
             }
         }, 3000);
+    }
+
+    // Accessibility: Announce messages to screen readers
+    announceToScreenReader(message) {
+        const announcements = document.getElementById('announcements');
+        if (announcements) {
+            announcements.textContent = message;
+            // Clear after a delay to allow for multiple announcements
+            setTimeout(() => {
+                announcements.textContent = '';
+            }, 1000);
+        }
     }
 }
 

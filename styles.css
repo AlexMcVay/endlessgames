@@ -7,8 +7,8 @@
     --background: #fafafa;
     --surface: #ffffff;
     --error: #b00020;
-    --text-primary: #333333;
-    --text-secondary: #757575;
+    --text-primary: #1a1a1a; /* Improved contrast from #333333 to #1a1a1a */
+    --text-secondary: #4a4a4a; /* Improved contrast from #757575 to #4a4a4a */
     --border-radius: 8px;
     --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     --transition: all 0.3s ease;

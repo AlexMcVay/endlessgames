@@ -226,7 +226,7 @@ header h1 {
 .game-info span {
     font-weight: bold;
     font-size: 1.1rem;
-    color: #333;
+    color: #1a1a1a; /* Improved contrast from #333 to #1a1a1a */
 }
 
 /* Players Status */
@@ -342,7 +342,7 @@ header h1 {
 
 .phase-display h3 {
     margin-bottom: 1rem;
-    color: #333;
+    color: #1a1a1a; /* Improved contrast */
 }
 
 .completed-phases-area {
@@ -408,7 +408,8 @@ header h1 {
 }
 
 .action-btn:disabled {
-    background: #ccc;
+    background: #666666; /* Improved contrast from #ccc to #666666 */
+    color: #ffffff; /* Ensure white text on dark disabled background */
     cursor: not-allowed;
     transform: none;
 }
@@ -423,7 +424,7 @@ header h1 {
 
 .phase-builder h3 {
     margin-bottom: 1rem;
-    color: #333;
+    color: #1a1a1a; /* Improved contrast from #333 to #1a1a1a */
 }
 
 .phase-builder-area {
@@ -551,8 +552,8 @@ header h1 {
 }
 
 .card.yellow {
-    background: #f7d794;
-    color: #333;
+    background: #e6c547; /* Improved contrast - darker yellow */
+    color: #1a1a1a; /* Improved contrast for yellow cards */
 }
 
 .card.wild {
@@ -593,7 +594,7 @@ header h1 {
 
 .game-over-container h2 {
     margin-bottom: 2rem;
-    color: #333;
+    color: #1a1a1a; /* Improved contrast */
     font-size: 2.5rem;
 }
 
@@ -737,8 +738,8 @@ header h1 {
 }
 
 .mini-card.yellow {
-    background: #f7d794;
-    color: #333;
+    background: #e6c547; /* Improved contrast - darker yellow to match cards */
+    color: #1a1a1a; /* Improved contrast for yellow mini-cards */
 }
 
 .mini-card.wild {
@@ -927,4 +928,68 @@ header h1 {
 .phase-group-display .phase-group-1:not(:empty)::after,
 .phase-group-display .phase-group-2:not(:empty)::after {
     content: none;
+}
+
+/* Accessibility Improvements */
+
+/* Focus indicators for better keyboard navigation */
+.action-btn:focus,
+.back-btn:focus,
+.help-btn:focus,
+.start-btn:focus,
+button:focus,
+input:focus,
+select:focus {
+    outline: 3px solid #ffd700; /* High contrast yellow outline */
+    outline-offset: 2px;
+    box-shadow: 0 0 0 1px #1a1a1a; /* Dark shadow for better visibility */
+}
+
+/* Ensure buttons have minimum touch target size for mobile accessibility */
+.action-btn,
+.back-btn,
+.help-btn,
+.start-btn {
+    min-height: 44px; /* WCAG recommended minimum touch target */
+    min-width: 44px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --text-primary: #000000;
+        --text-secondary: #000000;
+    }
+    
+    .card {
+        border: 2px solid #000000;
+    }
+    
+    .action-btn:disabled {
+        background: #000000;
+        color: #ffffff;
+        border: 2px solid #ffffff;
+    }
+}
+
+/* Reduced motion support for users with vestibular disorders */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Screen reader only class for accessibility announcements */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }

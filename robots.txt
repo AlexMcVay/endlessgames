@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Allow indexing of main game pages
+Allow: /index.html
+Allow: /checkers/
+Allow: /chess/
+Allow: /cryptogram/
+Allow: /phase10/
+
+# Sitemap location (if you create one in the future)
+# Sitemap: https://yourdomain.com/sitemap.xml
