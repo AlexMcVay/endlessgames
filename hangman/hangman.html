@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman - MultiGameApp</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="hangman.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><span class="logo">H</span>angman</h1>
+            <p>Guess the word before the hangman is complete!</p>
+        </div>
+    </header>
+
+    <main>
+        <div class="game-container">
+            <div class="controls">
+                <button id="newGame" class="control-btn">New Game</button>
+                <button id="showRules" class="control-btn">Show Rules</button>
+                <button id="showHint" class="control-btn secondary">Show Hint</button>
+                <a href="../index.html" class="control-btn home-link">
+                    <i class="fas fa-home"></i> Back to Games
+                </a>
+            </div>
+
+            <div class="game-board">
+                <div class="hangman-display">
+                    <div id="hangmanDrawing" class="hangman-drawing">
+                        <div class="gallows">
+                            <div class="base"></div>
+                            <div class="pole"></div>
+                            <div class="top-beam"></div>
+                            <div class="noose"></div>
+                        </div>
+                        <div class="hangman-parts">
+                            <div class="head" style="display: none;"></div>
+                            <div class="body" style="display: none;"></div>
+                            <div class="left-arm" style="display: none;"></div>
+                            <div class="right-arm" style="display: none;"></div>
+                            <div class="left-leg" style="display: none;"></div>
+                            <div class="right-leg" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="word-display">
+                    <div id="wordContainer" class="word-container">
+                        <!-- Word letters will be dynamically inserted here -->
+                    </div>
+                    <div id="categoryDisplay" class="category-display">
+                        <!-- Category will be shown here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="alphabet-container">
+                <div id="alphabetButtons" class="alphabet-buttons">
+                    <!-- Alphabet buttons will be dynamically created -->
+                </div>
+            </div>
+
+            <div class="game-info">
+                <div class="info-item">
+                    <span class="label">Wrong Guesses:</span>
+                    <span id="wrongGuesses" class="value">0 / 6</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Score:</span>
+                    <span id="score" class="value">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rules Modal -->
+        <div id="rulesModal" class="rules-modal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <div class="rules-content">
+                    <h2>Hangman Rules</h2>
+                    
+                    <h3>How to Play</h3>
+                    <ul>
+                        <li>A random word is chosen from a specific category</li>
+                        <li>Click on letters to guess the word</li>
+                        <li>Correct guesses reveal the letter in the word</li>
+                        <li>Wrong guesses add a part to the hangman drawing</li>
+                    </ul>
+                    
+                    <h3>Winning & Losing</h3>
+                    <ul>
+                        <li>Win by guessing all letters in the word before the hangman is complete</li>
+                        <li>Lose if the hangman drawing is completed (6 wrong guesses)</li>
+                    </ul>
+                    
+                    <h3>Scoring</h3>
+                    <ul>
+                        <li>Earn points for each correct word guessed</li>
+                        <li>Bonus points for guessing with fewer wrong attempts</li>
+                        <li>Use hints if you get stuck (costs points)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game End Overlay -->
+        <div id="gameEndOverlay" class="overlay" style="display: none;">
+            <div class="overlay-content">
+                <h2 id="winnerText">Game Over</h2>
+                <h3 id="winnerName" style="color: var(--primary-color);">You Won!</h3>
+                <div class="game-stats">
+                    <p id="finalScore">Final Score: 0</p>
+                    <p id="wordReveal">The word was: <span id="revealedWord"></span></p>
+                </div>
+                <div class="button-group">
+                    <button id="replayButton" class="play-btn">Play Again</button>
+                    <button id="homeButton" class="play-btn">Home</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Created by <a href="https://www.alexmcvay.icu" target="_blank" rel="noopener noreferrer">Alex McVay</a></p>
+            <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="AlexandraMcVay" data-description="Support me on Buy me a coffee!" data-message="Thanks for Playing!" data-color="#BD5FFF" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
+        </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script src="hangman.js"></script>
+</body>
+</html>
