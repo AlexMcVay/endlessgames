@@ -102,11 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const value = event.target.value.toUpperCase();
         const correctLetter = currentPhrase[index];
 
-        // Accept only valid alphabetic inputs and check if it's the correct letter
+        // Accept only alphabetic inputs
         if (value.match(/^[A-Z]$/)) {
+            playerGuesses[index] = value;
+            
             if (value === correctLetter) {
-                // Correct letter - accept it
-                playerGuesses[index] = value;
+                // Correct letter - green styling
                 event.target.style.backgroundColor = '#d4edda'; // Light green background for correct
                 event.target.style.color = '#155724'; // Dark green text
                 
@@ -116,28 +117,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     setTimeout(() => nextInput.focus(), 100);
                 }
             } else {
-                // Incorrect letter - reject it with visual feedback
-                event.target.value = ''; // Clear invalid input
-                event.target.style.backgroundColor = '#f8d7da'; // Light red background for incorrect
-                event.target.style.color = '#721c24'; // Dark red text
-                event.target.classList.add('shake'); // Add shake animation
-                
-                // Reset styles and animation after a short delay
-                setTimeout(() => {
-                    event.target.style.backgroundColor = '';
-                    event.target.style.color = '';
-                    event.target.classList.remove('shake');
-                }, 500);
-                
-                delete playerGuesses[index];
+                // Incorrect letter - neutral styling (player can see their guess)
+                event.target.style.backgroundColor = '#fff3cd'; // Light yellow background for incorrect
+                event.target.style.color = '#856404'; // Dark yellow text
             }
         } else {
-            event.target.value = ''; // Clear invalid input
+            // Invalid input - clear it
+            event.target.value = '';
             delete playerGuesses[index];
+            event.target.style.backgroundColor = '';
+            event.target.style.color = '';
         }
 
         checkWinCondition();
-    }    // Helper function to find the next empty input field
+    }// Helper function to find the next empty input field
     function findNextEmptyInput(currentIndex) {
         const inputs = document.querySelectorAll('.cryptogram-cell input');
         const currentIndexNum = parseInt(currentIndex);
