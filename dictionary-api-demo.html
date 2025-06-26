@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dictionary API Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .search-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .input-group {
+            display: flex;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #5a6fd8;
+        }
+        
+        .options {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .option-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .results {
+            margin-top: 20px;
+        }
+        
+        .word-card {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .word-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .phonetic {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        
+        .part-of-speech {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .definitions {
+            margin-bottom: 15px;
+        }
+        
+        .definition {
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .definition:before {
+            content: "•";
+            color: #667eea;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .example {
+            background: #f8f9fa;
+            padding: 10px;
+            border-left: 4px solid #667eea;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .difficulty {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        
+        .common {
+            background: #ffc107;
+            color: black;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔤 Dictionary API Demo</h1>
+        
+        <!-- API Statistics -->
+        <div id="stats" class="stats"></div>
+        
+        <!-- Word Lookup Section -->
+        <div class="search-section">
+            <h3>Word Lookup</h3>
+            <div class="input-group">
+                <input type="text" id="wordInput" placeholder="Enter a word to look up..." />
+                <button onclick="lookupWord()">Look Up</button>
+            </div>
+        </div>
+        
+        <!-- Word Search Section -->
+        <div class="search-section">
+            <h3>Search Words</h3>
+            <div class="input-group">
+                <input type="text" id="searchInput" placeholder="Search for words..." />
+                <button onclick="searchWords()">Search</button>
+            </div>
+            <div class="options">
+                <div class="option-group">
+                    <label>Limit:</label>
+                    <select id="searchLimit">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <input type="checkbox" id="exactMatch" />
+                    <label for="exactMatch">Exact match only</label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Random Words Section -->
+        <div class="search-section">
+            <h3>Random Words</h3>
+            <div class="options">
+                <div class="option-group">
+                    <label>Count:</label>
+                    <select id="randomCount">
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label>Difficulty:</label>
+                    <select id="randomDifficulty">
+                        <option value="">Any</option>
+                        <option value="1">1 (Easy)</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5 (Medium)</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10 (Hard)</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <input type="checkbox" id="commonOnly" />
+                    <label for="commonOnly">Common words only</label>
+                </div>
+                <button onclick="getRandomWords()">Get Random Words</button>
+            </div>
+        </div>
+        
+        <!-- Results -->
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:5000/api';
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            
+            // Add enter key listeners
+            document.getElementById('wordInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') lookupWord();
+            });
+            
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') searchWords();
+            });
+        });
+        
+        // Load API statistics
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/stats`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayStats(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        // Display statistics
+        function displayStats(stats) {
+            const statsContainer = document.getElementById('stats');
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.total_words?.toLocaleString() || 'N/A'}</div>
+                    <div class="stat-label">Total Words</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.words_with_definitions?.toLocaleString() || 'N/A'}</div>
+                    <div class="stat-label">With Definitions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.common_words?.toLocaleString() || 'N/A'}</div>
+                    <div class="stat-label">Common Words</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.added_today || 0}</div>
+                    <div class="stat-label">Added Today</div>
+                </div>
+            `;
+        }
+        
+        // Look up a specific word
+        async function lookupWord() {
+            const word = document.getElementById('wordInput').value.trim();
+            if (!word) return;
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/word/${encodeURIComponent(word)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayWordDetails([data.data]);
+                } else {
+                    showError(data.error || 'Word not found');
+                }
+            } catch (error) {
+                showError('Error fetching word: ' + error.message);
+            }
+        }
+        
+        // Search for words
+        async function searchWords() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+            
+            const limit = document.getElementById('searchLimit').value;
+            const exact = document.getElementById('exactMatch').checked;
+            
+            showLoading();
+            
+            try {
+                const params = new URLSearchParams({
+                    q: query,
+                    limit: limit,
+                    exact: exact
+                });
+                
+                const response = await fetch(`${API_BASE_URL}/search?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySearchResults(data.data);
+                } else {
+                    showError(data.error || 'Search failed');
+                }
+            } catch (error) {
+                showError('Error searching: ' + error.message);
+            }
+        }
+        
+        // Get random words
+        async function getRandomWords() {
+            const count = document.getElementById('randomCount').value;
+            const difficulty = document.getElementById('randomDifficulty').value;
+            const commonOnly = document.getElementById('commonOnly').checked;
+            
+            showLoading();
+            
+            try {
+                const params = new URLSearchParams({
+                    count: count,
+                    common_only: commonOnly
+                });
+                
+                if (difficulty) {
+                    params.append('difficulty', difficulty);
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/random?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.data.words && data.data.words.length > 0) {
+                        displayWordDetails(data.data.words);
+                    } else {
+                        displaySearchResults(data.data);
+                    }
+                } else {
+                    showError(data.error || 'Failed to get random words');
+                }
+            } catch (error) {
+                showError('Error getting random words: ' + error.message);
+            }
+        }
+        
+        // Display word details
+        function displayWordDetails(words) {
+            const resultsContainer = document.getElementById('results');
+            
+            if (!words || words.length === 0) {
+                resultsContainer.innerHTML = '<div class="error">No words found</div>';
+                return;
+            }
+            
+            const wordsHtml = words.map(word => `
+                <div class="word-card">
+                    <div class="word-title">
+                        ${word.word}
+                        ${word.difficulty_level ? `<span class="difficulty ${word.is_common ? 'common' : ''}">Level ${word.difficulty_level}</span>` : ''}
+                        ${word.is_common ? '<span class="difficulty common">Common</span>' : ''}
+                    </div>
+                    ${word.phonetic ? `<div class="phonetic">${word.phonetic}</div>` : ''}
+                    ${word.part_of_speech ? `<span class="part-of-speech">${word.part_of_speech}</span>` : ''}
+                    
+                    ${word.definitions && word.definitions.length > 0 ? `
+                        <div class="definitions">
+                            ${word.definitions.map(def => `<div class="definition">${def}</div>`).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    ${word.example ? `<div class="example">"${word.example}"</div>` : ''}
+                </div>
+            `).join('');
+            
+            resultsContainer.innerHTML = wordsHtml;
+        }
+        
+        // Display search results
+        function displaySearchResults(data) {
+            const resultsContainer = document.getElementById('results');
+            
+            if (!data.words || data.words.length === 0) {
+                resultsContainer.innerHTML = '<div class="error">No words found</div>';
+                return;
+            }
+            
+            const resultHtml = `
+                <div class="word-card">
+                    <h3>Search Results (${data.count} words found)</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 15px;">
+                        ${data.words.map(word => `
+                            <span style="padding: 5px 10px; background: #f8f9fa; border-radius: 15px; text-align: center; cursor: pointer;" 
+                                  onclick="document.getElementById('wordInput').value='${word}'; lookupWord();">
+                                ${word}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            resultsContainer.innerHTML = resultHtml;
+        }
+        
+        // Show loading message
+        function showLoading() {
+            document.getElementById('results').innerHTML = '<div class="loading">Loading...</div>';
+        }
+        
+        // Show error message
+        function showError(message) {
+            document.getElementById('results').innerHTML = `<div class="error">${message}</div>`;
+        }
+    </script>
+</body>
+</html>

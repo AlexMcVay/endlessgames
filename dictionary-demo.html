@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dictionary Demo - MultigameApp</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        .dictionary-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .search-section {
+            background: var(--card-background);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .definition-card {
+            background: var(--card-background);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .word-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .phonetic {
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        
+        .part-of-speech {
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        
+        .definitions {
+            margin-bottom: 15px;
+        }
+        
+        .definition-item {
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .definition-item::before {
+            content: "•";
+            color: var(--primary-color);
+            position: absolute;
+            left: 0;
+        }
+        
+        .example {
+            background: rgba(var(--primary-color-rgb), 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            font-style: italic;
+            margin-top: 10px;
+        }
+        
+        .random-words {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .random-word-card {
+            background: var(--card-background);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .random-word-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .loading {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 20px;
+        }
+        
+        .error {
+            background: #ff4444;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: var(--primary-color-dark);
+        }
+        
+        .btn.secondary {
+            background: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><span class="logo">D</span>ictionary Demo</h1>
+            <p>English Dictionary API Integration</p>
+        </div>
+    </header>
+
+    <a href="../index.html" class="home-button" title="Home">
+        <i class="fas fa-home" alt="Home"></i>
+    </a>
+
+    <main>
+        <div class="dictionary-container">
+            <!-- Search Section -->
+            <div class="search-section">
+                <h2>Word Lookup</h2>
+                <input type="text" id="searchInput" class="search-input" placeholder="Enter a word to search...">
+                <button onclick="searchWord()" class="btn">Search</button>
+                <button onclick="getRandomWords()" class="btn secondary">Random Words</button>
+                <button onclick="showApiStatus()" class="btn secondary">API Status</button>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results"></div>
+
+            <!-- Random Words Section -->
+            <div id="randomWordsSection" style="display: none;">
+                <h2>Random Words</h2>
+                <div id="randomWords" class="random-words"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000';
+
+        // Search for a word
+        async function searchWord() {
+            const word = document.getElementById('searchInput').value.trim();
+            if (!word) {
+                showError('Please enter a word to search');
+                return;
+            }
+
+            showLoading('Searching for word...');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/word/${encodeURIComponent(word)}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    displayWordDefinition(data.data);
+                } else {
+                    showError(data.message);
+                }
+            } catch (error) {
+                showError('Error connecting to API. Make sure the dictionary API is running on port 5000.');
+                console.error('API Error:', error);
+            }
+        }
+
+        // Display word definition
+        function displayWordDefinition(wordData) {
+            const resultsDiv = document.getElementById('results');
+            
+            const definitionsHtml = wordData.definitions.map(def => 
+                `<div class="definition-item">${def}</div>`
+            ).join('');
+
+            resultsDiv.innerHTML = `
+                <div class="definition-card">
+                    <div class="word-title">${wordData.word}</div>
+                    ${wordData.phonetic ? `<div class="phonetic">${wordData.phonetic}</div>` : ''}
+                    ${wordData.part_of_speech ? `<div class="part-of-speech">${wordData.part_of_speech}</div>` : ''}
+                    <div class="definitions">
+                        <strong>Definitions:</strong>
+                        ${definitionsHtml}
+                    </div>
+                    ${wordData.example ? `<div class="example"><strong>Example:</strong> "${wordData.example}"</div>` : ''}
+                </div>
+            `;
+
+            // Hide random words section
+            document.getElementById('randomWordsSection').style.display = 'none';
+        }
+
+        // Get random words
+        async function getRandomWords() {
+            showLoading('Fetching random words...');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/random?count=12`);
+                const data = await response.json();
+
+                if (data.success) {
+                    displayRandomWords(data.data.words);
+                } else {
+                    showError(data.message);
+                }
+            } catch (error) {
+                showError('Error connecting to API. Make sure the dictionary API is running on port 5000.');
+                console.error('API Error:', error);
+            }
+        }
+
+        // Display random words
+        function displayRandomWords(words) {
+            const randomWordsDiv = document.getElementById('randomWords');
+            const randomWordsSection = document.getElementById('randomWordsSection');
+            
+            const wordsHtml = words.map(word => `
+                <div class="random-word-card" onclick="selectWord('${word.word}')">
+                    <strong>${word.word}</strong>
+                    ${word.part_of_speech ? `<div style="font-size: 12px; color: var(--text-secondary);">${word.part_of_speech}</div>` : ''}
+                    <div style="font-size: 14px; margin-top: 5px;">
+                        ${word.definitions[0] ? word.definitions[0].substring(0, 100) + (word.definitions[0].length > 100 ? '...' : '') : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            randomWordsDiv.innerHTML = wordsHtml;
+            randomWordsSection.style.display = 'block';
+            
+            // Clear main results
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // Select a word from random words
+        function selectWord(word) {
+            document.getElementById('searchInput').value = word;
+            searchWord();
+        }
+
+        // Show API status
+        async function showApiStatus() {
+            showLoading('Checking API status...');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/stats`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const resultsDiv = document.getElementById('results');
+                    resultsDiv.innerHTML = `
+                        <div class="definition-card">
+                            <div class="word-title">API Status</div>
+                            <div class="definitions">
+                                <div class="definition-item">Total Words: ${data.data.total_words}</div>
+                                <div class="definition-item">Database Size: ${data.data.database_size}</div>
+                                <div class="definition-item">Status: ✅ Connected</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    showError(data.message);
+                }
+            } catch (error) {
+                showError('❌ API not available. Make sure the dictionary API is running on port 5000.');
+                console.error('API Error:', error);
+            }
+        }
+
+        // Show loading message
+        function showLoading(message) {
+            document.getElementById('results').innerHTML = `
+                <div class="loading">${message}</div>
+            `;
+        }
+
+        // Show error message
+        function showError(message) {
+            document.getElementById('results').innerHTML = `
+                <div class="error">${message}</div>
+            `;
+        }
+
+        // Handle Enter key in search input
+        document.getElementById('searchInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                searchWord();
+            }
+        });
+
+        // Load random words on page load
+        window.addEventListener('load', function() {
+            getRandomWords();
+        });
+    </script>
+</body>
+</html>
